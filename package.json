@@ -10,7 +10,7 @@
     "lint": "biome check .",
     "lint:fix": "biome check . --write",
     "lint:arch": "biome check src/app src/features src/shared src/entities src/payload",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "next typegen && tsc --noEmit",
     "format": "biome format --write .",
     "payload": "payload",
     "generate:types": "payload generate:types",
