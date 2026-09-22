@@ -17,6 +17,7 @@
     "generate:importmap": "payload generate:importmap",
     "migrate": "payload migrate",
     "migrate:create": "payload migrate:create",
+    "migrate:check": "bash .github/scripts/check-migrations.sh",
     "test": "vitest run",
     "test:watch": "vitest"
   },

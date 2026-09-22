@@ -1,0 +1,82 @@
+name: Production Release
+
+# Vercel builds main but must not assign it to production itself (Project Settings →
+# Environments → Production → disable auto-assign). This workflow promotes it only
+# after the production database has been migrated, so live code never runs ahead
+# of its schema.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      commit_sha:
+        description: "Optional commit SHA to release (defaults to the triggering commit)"
+        required: false
+
+concurrency:
+  group: production-release
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  PAYLOAD_SECRET: ci-placeholder
+  R2_ACCOUNT_ID: ci
+  R2_ACCESS_KEY_ID: ci
+  R2_SECRET_ACCESS_KEY: ci
+  R2_BUCKET_NAME: ci
+  NEXT_PUBLIC_R2_PUBLIC_BASE_URL: https://r2.example.com
+  NEXT_PUBLIC_SITE_URL: https://adcollection-inbeat.vercel.app
+  VERCEL_PROJECT: adcollection
+  VERCEL_SCOPE: inbeat
+
+jobs:
+  release:
+    name: Verify, migrate DB, promote deployment
+    runs-on: ubuntu-latest
+    environment: Production
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.commit_sha || github.sha }}
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: package.json
+
+      - run: bun install --frozen-lockfile
+      - run: bun run lint
+      - run: bun run typecheck
+      - run: bun run test
+
+      - name: Check migrations match the Payload config
+        env:
+          DATABASE_URL: postgres://ci:ci@localhost:5432/ci
+        run: bun run migrate:check
+
+      - name: Migrate the production database
+        timeout-minutes: 10
+        env:
+          DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
+        run: bun run migrate
+
+      - name: Resolve the Vercel deployment for this commit
+        id: vercel
+        env:
+          COMMIT_SHA: ${{ inputs.commit_sha || github.sha }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: bash .github/scripts/resolve-vercel-deployment.sh "$COMMIT_SHA" "$VERCEL_TOKEN"
+
+      - name: Promote to production
+        if: steps.vercel.outputs.skip_promote != 'true'
+        env:
+          DEPLOYMENT_URL: ${{ steps.vercel.outputs.deployment_url }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: bunx vercel@59.16.0 promote "$DEPLOYMENT_URL" --yes --scope="$VERCEL_SCOPE" --token="$VERCEL_TOKEN"
+
+      - name: Production already current
+        if: steps.vercel.outputs.skip_promote == 'true'
+        run: echo "This commit is already the production deployment; promote skipped."
