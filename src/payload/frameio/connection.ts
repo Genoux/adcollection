@@ -118,10 +118,16 @@ export async function completeConnection(payload: BasePayload, state: string, co
   return { accountName, userId: userId(connection) };
 }
 
+// IMS answers 400 invalid_grant (sometimes 401) for a refresh token it no longer
+// honours. Anything else — network failure, 5xx — says nothing about the token.
+const isRejectedGrant = (error: unknown) =>
+  error instanceof FrameioError && (error.status === 400 || error.status === 401);
+
 /**
- * Two concurrent callers can both refresh and one rotated token is then discarded.
- * IMS keeps the newest valid, so the loser simply refreshes again on its next call
- * rather than failing — cheap enough that locking is not worth the complexity.
+ * Concurrent callers sharing one connection (several MCP sessions of the same user)
+ * can refresh with the same token at once. IMS rotates it on use, so the loser is
+ * rejected; it then adopts the winner's tokens instead of treating the connection
+ * as dead. Cheaper than a lock, and the race needs an expiry to coincide anyway.
  */
 export async function authForUser(payload: BasePayload, user: number): Promise<FrameioAuth> {
   const connection = await findByUser(payload, user);
@@ -144,11 +150,21 @@ export async function authForUser(payload: BasePayload, user: number): Promise<F
   try {
     tokens = await refreshTokens(connection.refreshToken);
   } catch (error) {
-    // A dead refresh token is unrecoverable without the human, so clear it and let
-    // the caller send them back through the connect flow.
+    if (!isRejectedGrant(error)) throw error;
+
+    const latest = await findByUser(payload, user);
+    if (latest?.accessToken && latest.refreshToken !== connection.refreshToken) {
+      return { accessToken: latest.accessToken, accountId: connection.accountId };
+    }
+
+    // Scoped to the token that was rejected, so a rotation that lands in between is
+    // not wiped out along with it.
     await payload.update({
       collection: "frameio-connections",
-      id: connection.id,
+      where: {
+        id: { equals: connection.id },
+        refreshToken: { equals: connection.refreshToken },
+      },
       overrideAccess: true,
       data: { accessToken: null, refreshToken: null, expiresAt: null },
     });
