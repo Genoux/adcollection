@@ -1,9 +1,9 @@
 import { MigrateUpArgs, MigrateDownArgs, sql } from '@payloadcms/db-postgres'
 
-// The `SET lock_timeout` is a hand edit. Adding columns to "ads" needs an ACCESS
-// EXCLUSIVE lock, and this runs from the build command against a live database: with
-// Postgres' default of "wait forever", one long-lived reader would hang the deploy
-// rather than fail it. Aborting lets the build retry on a quiet moment instead.
+// The `SET lock_timeout` is a hand edit. Adding columns to "ads" takes an ACCESS
+// EXCLUSIVE lock, and this is run against the live database, where Postgres waits for
+// that lock forever by default: one long-lived reader would stall the migration and
+// queue every query behind it. Aborting lets it be retried at a quieter moment.
 export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   await db.execute(sql`
    SET lock_timeout = '20s';

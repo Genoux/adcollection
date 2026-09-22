@@ -38,10 +38,10 @@ export default buildConfig({
   db: postgresAdapter({
     pool: {
       connectionString: env.DATABASE_URL,
-      // Migrations run from the build command and node-postgres waits forever by
-      // default, so an unreachable database hangs the deploy instead of failing it.
-      // Keep this client-side: server settings passed as startup parameters are
-      // rejected by pooled (PgBouncer) endpoints.
+      // node-postgres waits forever for a connection by default, so an unreachable
+      // database leaves requests and `payload migrate` runs hanging with no error.
+      // Keep limits client-side: server settings sent as connection startup
+      // parameters are rejected by pooled (PgBouncer) endpoints.
       connectionTimeoutMillis: 15_000,
     },
     // Dev push would auto-sync this config onto whatever DATABASE_URL points at, and that
