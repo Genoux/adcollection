@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "next dev --turbopack --port 3000 --experimental-https --experimental-https-key ./certificates/local.adcollection.co-key.pem --experimental-https-cert ./certificates/local.adcollection.co.pem",
-    "build": "next build",
+    "build": "payload migrate && next build",
     "start": "next start",
     "lint": "biome check .",
     "lint:fix": "biome check . --write",
