@@ -36,7 +36,15 @@ export default buildConfig({
     Users,
   ],
   db: postgresAdapter({
-    pool: { connectionString: env.DATABASE_URL },
+    pool: {
+      connectionString: env.DATABASE_URL,
+      // Migrations run from the build command, and node-postgres waits forever by
+      // default: an unreachable database or an ALTER TABLE queued behind another
+      // session's lock would hang the deploy rather than fail it. Both caps turn
+      // that into a build error you can read.
+      connectionTimeoutMillis: 15_000,
+      options: "-c lock_timeout=20s",
+    },
     // Dev push would auto-sync this config onto whatever DATABASE_URL points at, and that
     // is the production Neon database. Schema changes go through src/migrations only.
     push: false,
