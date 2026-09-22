@@ -1,8 +1,13 @@
 import { MigrateUpArgs, MigrateDownArgs, sql } from '@payloadcms/db-postgres'
 
+// The `SET lock_timeout` is a hand edit. Adding columns to "ads" needs an ACCESS
+// EXCLUSIVE lock, and this runs from the build command against a live database: with
+// Postgres' default of "wait forever", one long-lived reader would hang the deploy
+// rather than fail it. Aborting lets the build retry on a quiet moment instead.
 export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   await db.execute(sql`
-   CREATE TABLE "clients" (
+   SET lock_timeout = '20s';
+  CREATE TABLE "clients" (
   	"id" serial PRIMARY KEY NOT NULL,
   	"name" varchar NOT NULL,
   	"slug" varchar NOT NULL,
@@ -70,7 +75,8 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
 // at them, so the plain DROP CONSTRAINT statements below would abort the rollback.
 export async function down({ db, payload, req }: MigrateDownArgs): Promise<void> {
   await db.execute(sql`
-   ALTER TABLE "clients" DISABLE ROW LEVEL SECURITY;
+   SET lock_timeout = '20s';
+  ALTER TABLE "clients" DISABLE ROW LEVEL SECURITY;
   ALTER TABLE "industries" DISABLE ROW LEVEL SECURITY;
   ALTER TABLE "ad_types" DISABLE ROW LEVEL SECURITY;
   DROP TABLE "clients" CASCADE;
