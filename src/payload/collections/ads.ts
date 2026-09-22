@@ -63,7 +63,7 @@ export const Ads: CollectionConfig = {
                 components: {
                   afterInput: [
                     {
-                      path: "@/payload/admin/frameio-picker/picker#FrameioPicker",
+                      path: "@/payload/admin/frameio-picker/field#FrameioPickerField",
                       clientProps: { thumbnailPath: "thumbnail" },
                     },
                   ],
