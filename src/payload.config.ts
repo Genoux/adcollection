@@ -5,9 +5,12 @@ import { lexicalEditor } from "@payloadcms/richtext-lexical";
 import { s3Storage } from "@payloadcms/storage-s3";
 import { buildConfig } from "payload";
 import sharp from "sharp";
+import { AdTypes } from "@/payload/collections/ad-types";
 import { Ads } from "@/payload/collections/ads";
 import { Categories } from "@/payload/collections/categories";
+import { Clients } from "@/payload/collections/clients";
 import { ContentTypes } from "@/payload/collections/content-types";
+import { Industries } from "@/payload/collections/industries";
 import { Media } from "@/payload/collections/media";
 import { Platforms } from "@/payload/collections/platforms";
 import { Subcategories } from "@/payload/collections/subcategories";
@@ -20,7 +23,18 @@ export default buildConfig({
   secret: env.PAYLOAD_SECRET,
   sharp,
   editor: lexicalEditor({}),
-  collections: [Ads, Platforms, Categories, Subcategories, ContentTypes, Media, Users],
+  collections: [
+    Ads,
+    Platforms,
+    Clients,
+    Industries,
+    Categories,
+    Subcategories,
+    ContentTypes,
+    AdTypes,
+    Media,
+    Users,
+  ],
   db: postgresAdapter({
     pool: { connectionString: env.DATABASE_URL },
     // Dev push would auto-sync this config onto whatever DATABASE_URL points at, and that

@@ -69,9 +69,12 @@ export interface Config {
   collections: {
     ads: Ad;
     platforms: Platform;
+    clients: Client;
+    industries: Industry;
     categories: Category;
     subcategories: Subcategory;
     'content-types': ContentType;
+    'ad-types': AdType;
     media: Media;
     users: User;
     'payload-kv': PayloadKv;
@@ -83,9 +86,12 @@ export interface Config {
   collectionsSelect: {
     ads: AdsSelect<false> | AdsSelect<true>;
     platforms: PlatformsSelect<false> | PlatformsSelect<true>;
+    clients: ClientsSelect<false> | ClientsSelect<true>;
+    industries: IndustriesSelect<false> | IndustriesSelect<true>;
     categories: CategoriesSelect<false> | CategoriesSelect<true>;
     subcategories: SubcategoriesSelect<false> | SubcategoriesSelect<true>;
     'content-types': ContentTypesSelect<false> | ContentTypesSelect<true>;
+    'ad-types': AdTypesSelect<false> | AdTypesSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
@@ -176,9 +182,21 @@ export interface Ad {
   creatorHandle?: string | null;
   creatorProfileUrl?: string | null;
   platform: number | Platform;
+  /**
+   * The brand this ad was produced for.
+   */
+  client?: (number | null) | Client;
+  /**
+   * The vertical the client sells in, e.g. Beauty or Fintech.
+   */
+  industry?: (number | null) | Industry;
   category?: (number | null) | Category;
   subcategories?: (number | Subcategory)[] | null;
   contentTypes?: (number | ContentType)[] | null;
+  /**
+   * Ad format, e.g. UGC, Testimonial or Product Demo.
+   */
+  adTypes?: (number | AdType)[] | null;
   ratingAudienceGrab?: number | null;
   ratingWatchability?: number | null;
   ratingClarity?: number | null;
@@ -225,6 +243,28 @@ export interface Platform {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "clients".
+ */
+export interface Client {
+  id: number;
+  name: string;
+  slug: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "industries".
+ */
+export interface Industry {
+  id: number;
+  name: string;
+  slug: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "categories".
  */
 export interface Category {
@@ -250,6 +290,18 @@ export interface Subcategory {
  * via the `definition` "content-types".
  */
 export interface ContentType {
+  id: number;
+  name: string;
+  slug: string;
+  description?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ad-types".
+ */
+export interface AdType {
   id: number;
   name: string;
   slug: string;
@@ -315,6 +367,14 @@ export interface PayloadLockedDocument {
         value: number | Platform;
       } | null)
     | ({
+        relationTo: 'clients';
+        value: number | Client;
+      } | null)
+    | ({
+        relationTo: 'industries';
+        value: number | Industry;
+      } | null)
+    | ({
         relationTo: 'categories';
         value: number | Category;
       } | null)
@@ -325,6 +385,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'content-types';
         value: number | ContentType;
+      } | null)
+    | ({
+        relationTo: 'ad-types';
+        value: number | AdType;
       } | null)
     | ({
         relationTo: 'media';
@@ -400,9 +464,12 @@ export interface AdsSelect<T extends boolean = true> {
   creatorHandle?: T;
   creatorProfileUrl?: T;
   platform?: T;
+  client?: T;
+  industry?: T;
   category?: T;
   subcategories?: T;
   contentTypes?: T;
+  adTypes?: T;
   ratingAudienceGrab?: T;
   ratingWatchability?: T;
   ratingClarity?: T;
@@ -419,6 +486,26 @@ export interface AdsSelect<T extends boolean = true> {
  * via the `definition` "platforms_select".
  */
 export interface PlatformsSelect<T extends boolean = true> {
+  name?: T;
+  slug?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "clients_select".
+ */
+export interface ClientsSelect<T extends boolean = true> {
+  name?: T;
+  slug?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "industries_select".
+ */
+export interface IndustriesSelect<T extends boolean = true> {
   name?: T;
   slug?: T;
   updatedAt?: T;
@@ -449,6 +536,17 @@ export interface SubcategoriesSelect<T extends boolean = true> {
  * via the `definition` "content-types_select".
  */
 export interface ContentTypesSelect<T extends boolean = true> {
+  name?: T;
+  slug?: T;
+  description?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ad-types_select".
+ */
+export interface AdTypesSelect<T extends boolean = true> {
   name?: T;
   slug?: T;
   description?: T;

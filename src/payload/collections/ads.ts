@@ -113,6 +113,18 @@ export const Ads: CollectionConfig = {
           label: "Classification",
           fields: [
             { name: "platform", type: "relationship", relationTo: "platforms", required: true },
+            {
+              name: "client",
+              type: "relationship",
+              relationTo: "clients",
+              admin: { description: "The brand this ad was produced for." },
+            },
+            {
+              name: "industry",
+              type: "relationship",
+              relationTo: "industries",
+              admin: { description: "The vertical the client sells in, e.g. Beauty or Fintech." },
+            },
             { name: "category", type: "relationship", relationTo: "categories" },
             {
               name: "subcategories",
@@ -125,6 +137,13 @@ export const Ads: CollectionConfig = {
               type: "relationship",
               relationTo: "content-types",
               hasMany: true,
+            },
+            {
+              name: "adTypes",
+              type: "relationship",
+              relationTo: "ad-types",
+              hasMany: true,
+              admin: { description: "Ad format, e.g. UGC, Testimonial or Product Demo." },
             },
           ],
         },
