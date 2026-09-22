@@ -75,6 +75,9 @@ export interface Config {
     'content-types': ContentType;
     media: Media;
     users: User;
+    'frameio-connections': FrameioConnection;
+    'mcp-oauth-clients': McpOauthClient;
+    'mcp-oauth-grants': McpOauthGrant;
     'payload-mcp-api-keys': PayloadMcpApiKey;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
@@ -90,6 +93,9 @@ export interface Config {
     'content-types': ContentTypesSelect<false> | ContentTypesSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
+    'frameio-connections': FrameioConnectionsSelect<false> | FrameioConnectionsSelect<true>;
+    'mcp-oauth-clients': McpOauthClientsSelect<false> | McpOauthClientsSelect<true>;
+    'mcp-oauth-grants': McpOauthGrantsSelect<false> | McpOauthGrantsSelect<true>;
     'payload-mcp-api-keys': PayloadMcpApiKeysSelect<false> | PayloadMcpApiKeysSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
@@ -304,6 +310,66 @@ export interface User {
   collection: 'users';
 }
 /**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "frameio-connections".
+ */
+export interface FrameioConnection {
+  id: number;
+  user: number | User;
+  accessToken?: string | null;
+  refreshToken?: string | null;
+  expiresAt?: string | null;
+  /**
+   * Discovered from /v4/accounts when the connection is made.
+   */
+  accountId?: string | null;
+  accountName?: string | null;
+  authState?: string | null;
+  authStateExpiresAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "mcp-oauth-clients".
+ */
+export interface McpOauthClient {
+  id: number;
+  clientId: string;
+  clientName?: string | null;
+  redirectUris:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "mcp-oauth-grants".
+ */
+export interface McpOauthGrant {
+  id: number;
+  user: number | User;
+  client: number | McpOauthClient;
+  redirectUri: string;
+  codeHash?: string | null;
+  codeChallenge?: string | null;
+  codeExpiresAt?: string | null;
+  accessTokenHash?: string | null;
+  accessExpiresAt?: string | null;
+  refreshTokenHash?: string | null;
+  previousRefreshTokenHash?: string | null;
+  refreshExpiresAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * API keys control which collections, resources, tools, and prompts MCP clients can access
  *
  * This interface was referenced by `Config`'s JSON-Schema
@@ -435,6 +501,18 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'users';
         value: number | User;
+      } | null)
+    | ({
+        relationTo: 'frameio-connections';
+        value: number | FrameioConnection;
+      } | null)
+    | ({
+        relationTo: 'mcp-oauth-clients';
+        value: number | McpOauthClient;
+      } | null)
+    | ({
+        relationTo: 'mcp-oauth-grants';
+        value: number | McpOauthGrant;
       } | null)
     | ({
         relationTo: 'payload-mcp-api-keys';
@@ -610,6 +688,52 @@ export interface UsersSelect<T extends boolean = true> {
         createdAt?: T;
         expiresAt?: T;
       };
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "frameio-connections_select".
+ */
+export interface FrameioConnectionsSelect<T extends boolean = true> {
+  user?: T;
+  accessToken?: T;
+  refreshToken?: T;
+  expiresAt?: T;
+  accountId?: T;
+  accountName?: T;
+  authState?: T;
+  authStateExpiresAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "mcp-oauth-clients_select".
+ */
+export interface McpOauthClientsSelect<T extends boolean = true> {
+  clientId?: T;
+  clientName?: T;
+  redirectUris?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "mcp-oauth-grants_select".
+ */
+export interface McpOauthGrantsSelect<T extends boolean = true> {
+  user?: T;
+  client?: T;
+  redirectUri?: T;
+  codeHash?: T;
+  codeChallenge?: T;
+  codeExpiresAt?: T;
+  accessTokenHash?: T;
+  accessExpiresAt?: T;
+  refreshTokenHash?: T;
+  previousRefreshTokenHash?: T;
+  refreshExpiresAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

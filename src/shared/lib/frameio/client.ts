@@ -1,6 +1,6 @@
-import { frameioConfig } from "@/shared/lib/frameio/config";
 import { FrameioError } from "@/shared/lib/frameio/errors";
 import type {
+  FrameioAccount,
   FrameioChild,
   FrameioFile,
   FrameioList,
@@ -8,9 +8,7 @@ import type {
   FrameioSingle,
 } from "@/shared/lib/frameio/types";
 
-const IMS_TOKEN_URL = "https://ims-na1.adobelogin.com/ims/token/v3";
 const FRAMEIO_API_BASE = "https://api.frame.io/v4";
-const TOKEN_REFRESH_SKEW_MS = 60_000;
 
 const MEDIA_LINK_INCLUDES = [
   "media_links.efficient",
@@ -20,48 +18,28 @@ const MEDIA_LINK_INCLUDES = [
   "media_links.thumbnail",
 ].join(",");
 
-let cachedToken: { expiresAt: number; value: string } | null = null;
+/**
+ * Passed in rather than resolved here: tokens belong to the Payload user behind the
+ * request, and resolving them in this module would make it import the connection
+ * store, which already imports this module to discover the account id.
+ */
+export type FrameioAuth = {
+  accessToken: string;
+  accountId: string;
+};
 
-async function getAccessToken(): Promise<string> {
-  if (cachedToken && Date.now() < cachedToken.expiresAt) return cachedToken.value;
-
-  const config = frameioConfig();
-
-  const response = await fetch(IMS_TOKEN_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({
-      grant_type: "client_credentials",
-      client_id: config.FRAMEIO_CLIENT_ID,
-      client_secret: config.FRAMEIO_CLIENT_SECRET,
-      scope: "openid AdobeID frame.s2s.all",
-    }),
-  });
-
-  if (!response.ok) {
-    throw new FrameioError(
-      `adobe ims token request failed: ${response.status} ${await response.text()}`,
-      response.status,
-    );
-  }
-
-  const token = (await response.json()) as { access_token: string; expires_in: number };
-  cachedToken = {
-    value: token.access_token,
-    expiresAt: Date.now() + token.expires_in * 1000 - TOKEN_REFRESH_SKEW_MS,
-  };
-
-  return cachedToken.value;
-}
-
-async function frameioFetch<T>(path: string, searchParams?: Record<string, string>): Promise<T> {
+async function frameioFetch<T>(
+  path: string,
+  accessToken: string,
+  searchParams?: Record<string, string>,
+): Promise<T> {
   const url = new URL(`${FRAMEIO_API_BASE}${path}`);
   for (const [key, value] of Object.entries(searchParams ?? {})) {
     url.searchParams.set(key, value);
   }
 
   const response = await fetch(url, {
-    headers: { Authorization: `Bearer ${await getAccessToken()}` },
+    headers: { Authorization: `Bearer ${accessToken}` },
   });
 
   if (!response.ok) {
@@ -74,28 +52,68 @@ async function frameioFetch<T>(path: string, searchParams?: Record<string, strin
   return (await response.json()) as T;
 }
 
-const accountPath = (path: string) => `/accounts/${frameioConfig().FRAMEIO_ACCOUNT_ID}${path}`;
+/**
+ * Not account-scoped: this is how an account id is discovered in the first place.
+ * /v4/me deliberately does not return one.
+ */
+export async function listAccounts(accessToken: string): Promise<FrameioAccount[]> {
+  const { data } = await frameioFetch<FrameioList<FrameioAccount>>("/accounts", accessToken);
+  return data;
+}
 
-export async function listProjects(): Promise<FrameioProject[]> {
-  const { data } = await frameioFetch<FrameioList<FrameioProject>>(accountPath("/projects"));
+const accountPath = (auth: FrameioAuth, path: string) => `/accounts/${auth.accountId}${path}`;
+
+export async function listProjects(auth: FrameioAuth): Promise<FrameioProject[]> {
+  const { data } = await frameioFetch<FrameioList<FrameioProject>>(
+    accountPath(auth, "/projects"),
+    auth.accessToken,
+  );
   return data;
 }
 
 export const FOLDER_PAGE_SIZE = 50;
 
-export async function listFolderChildren(
-  folderId: string,
-): Promise<{ children: FrameioChild[]; hasMore: boolean }> {
+export type ChildrenPage = { children: FrameioChild[]; next: null | string };
+
+export type ChildrenOptions = {
+  after?: string;
+  // Only the small poster: `original` would 403 for viewers without download rights.
+  thumbnails?: boolean;
+};
+
+// Frame.io returns the next page as a full URL; only its opaque cursor is portable.
+const cursorOf = (next: null | string | undefined) =>
+  next ? new URL(next, FRAMEIO_API_BASE).searchParams.get("after") : null;
+
+async function listChildren(
+  auth: FrameioAuth,
+  path: string,
+  { after, thumbnails }: ChildrenOptions,
+): Promise<ChildrenPage> {
   const { data, links } = await frameioFetch<FrameioList<FrameioChild>>(
-    accountPath(`/folders/${folderId}/children`),
-    { sort: "created_at_desc", page_size: String(FOLDER_PAGE_SIZE) },
+    accountPath(auth, path),
+    auth.accessToken,
+    {
+      page_size: String(FOLDER_PAGE_SIZE),
+      sort: "created_at_desc",
+      ...(after && { after }),
+      ...(thumbnails && { include: "media_links.thumbnail" }),
+    },
   );
-  return { children: data, hasMore: Boolean(links?.next) };
+  return { children: data, next: cursorOf(links?.next) };
 }
 
-export async function getFile(fileId: string): Promise<FrameioFile> {
-  const { data } = await frameioFetch<FrameioSingle<FrameioFile>>(accountPath(`/files/${fileId}`), {
-    include: `${MEDIA_LINK_INCLUDES},creator`,
-  });
+export const listFolderChildren = (auth: FrameioAuth, folderId: string, options = {}) =>
+  listChildren(auth, `/folders/${folderId}/children`, options);
+
+export const listVersionStackChildren = (auth: FrameioAuth, stackId: string, options = {}) =>
+  listChildren(auth, `/version_stacks/${stackId}/children`, options);
+
+export async function getFile(auth: FrameioAuth, fileId: string): Promise<FrameioFile> {
+  const { data } = await frameioFetch<FrameioSingle<FrameioFile>>(
+    accountPath(auth, `/files/${fileId}`),
+    auth.accessToken,
+    { include: `${MEDIA_LINK_INCLUDES},creator` },
+  );
   return data;
 }

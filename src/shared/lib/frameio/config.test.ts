@@ -3,17 +3,16 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const VALID = {
   FRAMEIO_CLIENT_ID: "client-id",
   FRAMEIO_CLIENT_SECRET: "client-secret",
-  FRAMEIO_ACCOUNT_ID: "ff30697e-c521-4702-8e3a-6dbc505e422a",
 };
 
-// The module memoises its parse, so each case needs a fresh instance.
+// Fresh instance per case so the import-time assertion below is meaningful.
 const loadConfig = async () => {
   vi.resetModules();
   return import("./config");
 };
 
 beforeEach(() => {
-  for (const key of [...Object.keys(VALID), "FRAMEIO_MAX_VIDEO_MB"]) {
+  for (const key of [...Object.keys(VALID), "FRAMEIO_MAX_VIDEO_MB", "NEXT_PUBLIC_SITE_URL"]) {
     vi.stubEnv(key, undefined);
   }
 });
@@ -36,15 +35,23 @@ describe("frameioConfig", () => {
     const { frameioConfig } = await loadConfig();
     expect(() => frameioConfig()).toThrow(/FRAMEIO_CLIENT_ID/);
     expect(() => frameioConfig()).toThrow(/FRAMEIO_CLIENT_SECRET/);
-    expect(() => frameioConfig()).toThrow(/FRAMEIO_ACCOUNT_ID/);
   });
 
-  it("rejects an account id that is not a uuid", async () => {
-    for (const [key, value] of Object.entries(VALID)) vi.stubEnv(key, value);
-    vi.stubEnv("FRAMEIO_ACCOUNT_ID", "not-a-uuid");
+  it("rejects a Frame.io developer token pasted in place of the Adobe client secret", async () => {
+    vi.stubEnv("FRAMEIO_CLIENT_ID", VALID.FRAMEIO_CLIENT_ID);
+    vi.stubEnv("FRAMEIO_CLIENT_SECRET", "fio-u-abc123");
 
     const { frameioConfig } = await loadConfig();
-    expect(() => frameioConfig()).toThrow(/FRAMEIO_ACCOUNT_ID/);
+    expect(() => frameioConfig()).toThrow(/Frame.io developer token, not the Adobe client secret/);
+  });
+
+  it("picks up credentials changed after the first read, as next dev does on env reload", async () => {
+    for (const [key, value] of Object.entries(VALID)) vi.stubEnv(key, value);
+    const { frameioConfig } = await loadConfig();
+    expect(frameioConfig().FRAMEIO_CLIENT_SECRET).toBe("client-secret");
+
+    vi.stubEnv("FRAMEIO_CLIENT_SECRET", "p8e-rotated");
+    expect(frameioConfig().FRAMEIO_CLIENT_SECRET).toBe("p8e-rotated");
   });
 
   it("defaults the video cap to 100MB when unset", async () => {
@@ -60,5 +67,42 @@ describe("frameioConfig", () => {
 
     const { maxVideoBytes } = await loadConfig();
     expect(maxVideoBytes()).toBe(250 * 1024 * 1024);
+  });
+});
+
+describe("redirectUri", () => {
+  it("appends the callback path to the site url", async () => {
+    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://adcollection.co");
+
+    const { redirectUri } = await loadConfig();
+    expect(redirectUri()).toBe("https://adcollection.co/api/frameio/callback");
+  });
+
+  it("does not double up the slash when the site url has a trailing one", async () => {
+    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://adcollection.co/");
+
+    const { redirectUri } = await loadConfig();
+    expect(redirectUri()).toBe("https://adcollection.co/api/frameio/callback");
+  });
+
+  it("keeps the port, which the registered adobe redirect uri includes", async () => {
+    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://local.adcollection.co:3000");
+
+    const { redirectUri } = await loadConfig();
+    expect(redirectUri()).toBe("https://local.adcollection.co:3000/api/frameio/callback");
+  });
+
+  // Adobe rejects the credential outright rather than failing at redirect time,
+  // so this needs to surface as a configuration error rather than a 400 from IMS.
+  it("rejects plain http, which adobe will not accept even on localhost", async () => {
+    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "http://localhost:3000");
+
+    const { redirectUri } = await loadConfig();
+    expect(() => redirectUri()).toThrow(/https/);
+  });
+
+  it("fails clearly when the site url is missing entirely", async () => {
+    const { redirectUri } = await loadConfig();
+    expect(() => redirectUri()).toThrow(/https/);
   });
 });

@@ -22,7 +22,7 @@ export async function deleteMedia(req: PayloadRequest, ids: (number | string)[])
       req.payload
         .delete({ collection: "media", id, overrideAccess: false, req })
         .catch((error) =>
-          req.payload.logger.error({ err: error, id }, "[mcp] media cleanup failed"),
+          req.payload.logger.error({ err: error, id }, "[frameio] media cleanup failed"),
         ),
     ),
   );

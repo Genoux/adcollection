@@ -51,6 +51,11 @@ export type FrameioVersionStack = {
 
 export type FrameioChild = FrameioFile | FrameioFolder | FrameioVersionStack;
 
+export type FrameioAccount = {
+  display_name?: string;
+  id: string;
+};
+
 export type FrameioProject = {
   id: string;
   name: string;

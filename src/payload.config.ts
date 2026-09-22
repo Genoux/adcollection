@@ -9,11 +9,17 @@ import sharp from "sharp";
 import { Ads } from "@/payload/collections/ads";
 import { Categories } from "@/payload/collections/categories";
 import { ContentTypes } from "@/payload/collections/content-types";
+import { FrameioConnections } from "@/payload/collections/frameio-connections";
+import { McpOauthClients } from "@/payload/collections/mcp-oauth-clients";
+import { McpOauthGrants } from "@/payload/collections/mcp-oauth-grants";
 import { Media } from "@/payload/collections/media";
 import { Platforms } from "@/payload/collections/platforms";
 import { Subcategories } from "@/payload/collections/subcategories";
 import { Users } from "@/payload/collections/users";
 import { mcpTools } from "@/payload/mcp";
+import { mcpCollections } from "@/payload/mcp/collections";
+import { mcpAuthChallenge, mcpOverrideAuth } from "@/payload/mcp/oauth/plugin";
+import { AUTHORIZE_VIEW_PATH } from "@/payload/mcp/oauth/urls";
 import { env } from "@/shared/config/env";
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -22,7 +28,18 @@ export default buildConfig({
   secret: env.PAYLOAD_SECRET,
   sharp,
   editor: lexicalEditor({}),
-  collections: [Ads, Platforms, Categories, Subcategories, ContentTypes, Media, Users],
+  collections: [
+    Ads,
+    Platforms,
+    Categories,
+    Subcategories,
+    ContentTypes,
+    Media,
+    Users,
+    FrameioConnections,
+    McpOauthClients,
+    McpOauthGrants,
+  ],
   db: postgresAdapter({
     pool: { connectionString: env.DATABASE_URL },
     // Dev push silently diverges the database from src/migrations, which is how the
@@ -36,6 +53,19 @@ export default buildConfig({
   admin: {
     importMap: {
       baseDir: path.resolve(dirname, "app/(payload)"),
+    },
+    components: {
+      afterNavLinks: ["@/payload/admin/integrations/nav-link#IntegrationsNavLink"],
+      views: {
+        integrations: {
+          Component: "@/payload/admin/integrations/view#IntegrationsView",
+          path: "/integrations",
+        },
+        mcpAuthorize: {
+          Component: "@/payload/admin/mcp-authorize/view#McpAuthorizeView",
+          path: AUTHORIZE_VIEW_PATH,
+        },
+      },
     },
   },
   plugins: [
@@ -65,25 +95,14 @@ export default buildConfig({
     }),
     mcpPlugin({
       userCollection: "users",
-      collections: {
-        // Creating an ad requires attaching two uploads, which the generic create tool
-        // cannot do — importFrameioAd is the only creation path.
-        ads: {
-          description:
-            "Short-form video ads with brand, creator, classification and 1-10 ratings. Imported as drafts and published by a human.",
-          enabled: { find: true, update: true, create: false, delete: false },
-        },
-        media: { enabled: { find: true } },
-        platforms: { enabled: { find: true } },
-        categories: { enabled: { find: true } },
-        subcategories: { enabled: { find: true } },
-        "content-types": { enabled: { find: true } },
-      },
+      collections: mcpCollections,
+      overrideAuth: mcpOverrideAuth,
       mcp: {
         tools: mcpTools,
         serverOptions: { serverInfo: { name: "AdCollection", version: "1.0.0" } },
         handlerOptions: { maxDuration: 300 },
       },
     }),
+    mcpAuthChallenge(),
   ],
 });

@@ -1,12 +1,13 @@
 import type { PayloadRequest } from "payload";
 import { z } from "zod";
-import { createMedia, deleteMedia } from "@/payload/mcp/lib/media";
+import { importFrameioVideo } from "@/payload/frameio/import-video";
+import { deleteMedia } from "@/payload/frameio/media";
+import { withFrameio } from "@/payload/mcp/lib/auth";
 import { resolveTaxonomy, resolveTaxonomyMany } from "@/payload/mcp/lib/taxonomy";
 import { type McpTool, text } from "@/payload/mcp/lib/tool";
 import { env } from "@/shared/config/env";
-import { getFile } from "@/shared/lib/frameio/client";
-import { maxVideoBytes } from "@/shared/lib/frameio/config";
-import { downloadPoster, downloadVideo, formatBytes } from "@/shared/lib/frameio/renditions";
+import type { FrameioAuth } from "@/shared/lib/frameio/client";
+import { formatBytes } from "@/shared/lib/frameio/renditions";
 
 const schema = z.object({
   frameioFileId: z.string().describe("Frame.io file id of the video, from frameioBrowse."),
@@ -64,84 +65,72 @@ export const importFrameioAd: McpTool = {
   description:
     "Import a Frame.io video as a draft ad. Downloads the web-sized rendition and its poster frame into Media, resolves the taxonomy slugs, and creates the ad unpublished for human review. Returns the admin edit URL.",
   parameters: schema.shape,
-  handler: async (args, req) => {
-    const input = args as ImportArgs;
-    const file = await getFile(input.frameioFileId);
-
-    if (!file.media_type?.startsWith("video/")) {
-      return text(`"${file.name}" is ${file.media_type ?? "an unknown type"}, not a video.`);
-    }
-
-    if (file.status !== "transcoded") {
-      return text(
-        `"${file.name}" is still "${file.status}". Frame.io only exposes web renditions once transcoding finishes — try again shortly.`,
-      );
-    }
-
-    await assertSlugAvailable(req, input.slug);
-
-    const [platform, category, subcategories, contentTypes] = await Promise.all([
-      resolveTaxonomy(req, "platforms", input.platformSlug),
-      input.categorySlug ? resolveTaxonomy(req, "categories", input.categorySlug) : undefined,
-      resolveTaxonomyMany(req, "subcategories", input.subcategorySlugs ?? []),
-      resolveTaxonomyMany(req, "content-types", input.contentTypeSlugs ?? []),
-    ]);
-
-    // Sequential so only one asset buffer is live at a time; both are held in memory
-    // by Payload's upload pipeline and the video can be up to FRAMEIO_MAX_VIDEO_MB.
-    const videoAsset = await downloadVideo(file, maxVideoBytes());
-    const video = await createMedia(req, videoAsset, input.thumbnailTitle);
-
-    const posterAsset = await downloadPoster(file);
-    const thumbnail = await createMedia(req, posterAsset, `${input.thumbnailTitle} poster`);
-
-    try {
-      const ad = await req.payload.create({
-        collection: "ads",
-        draft: true,
-        overrideAccess: false,
-        req,
-        data: {
-          thumbnailTitle: input.thumbnailTitle,
-          name: input.name,
-          slug: input.slug,
-          caption: input.caption,
-          video: video.id,
-          thumbnail: thumbnail.id,
-          madeWithInbeat: input.madeWithInbeat,
-          originalUrl: input.originalUrl,
-          companyName: input.companyName,
-          companyWebsiteUrl: input.companyWebsiteUrl,
-          companyWebsiteDisplay: input.companyWebsiteDisplay,
-          brandHandleName: input.brandHandleName,
-          brandHandleUrl: input.brandHandleUrl,
-          soundName: input.soundName,
-          soundUrl: input.soundUrl,
-          creatorHandle: input.creatorHandle,
-          creatorProfileUrl: input.creatorProfileUrl,
-          platform,
-          category,
-          subcategories,
-          contentTypes,
-          ratingAudienceGrab: input.ratingAudienceGrab,
-          ratingWatchability: input.ratingWatchability,
-          ratingClarity: input.ratingClarity,
-          highlight: input.highlight,
-          highlightMetric: input.highlightMetric,
-        },
-      });
-
-      return text(
-        [
-          `imported "${file.name}" as a draft ad.`,
-          `video: ${videoAsset.rendition} rendition, ${formatBytes(videoAsset.data.byteLength)}`,
-          `poster: ${posterAsset.rendition} rendition`,
-          `review and publish: ${env.NEXT_PUBLIC_SITE_URL}/admin/collections/ads/${ad.id}`,
-        ].join("\n"),
-      );
-    } catch (error) {
-      await deleteMedia(req, [video.id, thumbnail.id]);
-      throw error;
-    }
-  },
+  handler: (args, req) => withFrameio(req, (auth) => runImport(auth, args as ImportArgs, req)),
 };
+
+async function runImport(auth: FrameioAuth, input: ImportArgs, req: PayloadRequest) {
+  await assertSlugAvailable(req, input.slug);
+
+  const [platform, category, subcategories, contentTypes] = await Promise.all([
+    resolveTaxonomy(req, "platforms", input.platformSlug),
+    input.categorySlug ? resolveTaxonomy(req, "categories", input.categorySlug) : undefined,
+    resolveTaxonomyMany(req, "subcategories", input.subcategorySlugs ?? []),
+    resolveTaxonomyMany(req, "content-types", input.contentTypeSlugs ?? []),
+  ]);
+
+  const { file, posterAsset, thumbnail, video, videoAsset } = await importFrameioVideo(
+    req,
+    auth,
+    input.frameioFileId,
+    input.thumbnailTitle,
+  );
+
+  try {
+    const ad = await req.payload.create({
+      collection: "ads",
+      draft: true,
+      overrideAccess: false,
+      req,
+      data: {
+        thumbnailTitle: input.thumbnailTitle,
+        name: input.name,
+        slug: input.slug,
+        caption: input.caption,
+        video: video.id,
+        thumbnail: thumbnail.id,
+        madeWithInbeat: input.madeWithInbeat,
+        originalUrl: input.originalUrl,
+        companyName: input.companyName,
+        companyWebsiteUrl: input.companyWebsiteUrl,
+        companyWebsiteDisplay: input.companyWebsiteDisplay,
+        brandHandleName: input.brandHandleName,
+        brandHandleUrl: input.brandHandleUrl,
+        soundName: input.soundName,
+        soundUrl: input.soundUrl,
+        creatorHandle: input.creatorHandle,
+        creatorProfileUrl: input.creatorProfileUrl,
+        platform,
+        category,
+        subcategories,
+        contentTypes,
+        ratingAudienceGrab: input.ratingAudienceGrab,
+        ratingWatchability: input.ratingWatchability,
+        ratingClarity: input.ratingClarity,
+        highlight: input.highlight,
+        highlightMetric: input.highlightMetric,
+      },
+    });
+
+    return text(
+      [
+        `imported "${file.name}" as a draft ad.`,
+        `video: ${videoAsset.rendition} rendition, ${formatBytes(videoAsset.data.byteLength)}`,
+        `poster: ${posterAsset.rendition} rendition`,
+        `review and publish: ${env.NEXT_PUBLIC_SITE_URL}/admin/collections/ads/${ad.id}`,
+      ].join("\n"),
+    );
+  } catch (error) {
+    await deleteMedia(req, [video.id, thumbnail.id]);
+    throw error;
+  }
+}

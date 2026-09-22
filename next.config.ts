@@ -14,6 +14,10 @@ if (!r2PublicBaseUrl) {
 const r2PublicHostname = new URL(r2PublicBaseUrl).hostname;
 
 const nextConfig: NextConfig = {
+  // Local dev is served on this hostname because the dev certificate and the Adobe
+  // OAuth redirect URI are both issued for it; without this, Next blocks it from
+  // the dev bundles and HMR and the admin renders blank.
+  allowedDevOrigins: ["local.adcollection.co"],
   experimental: {
     globalNotFound: true,
   },
