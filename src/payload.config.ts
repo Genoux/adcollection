@@ -1,6 +1,7 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { postgresAdapter } from "@payloadcms/db-postgres";
+import { mcpPlugin } from "@payloadcms/plugin-mcp";
 import { lexicalEditor } from "@payloadcms/richtext-lexical";
 import { s3Storage } from "@payloadcms/storage-s3";
 import { buildConfig } from "payload";
@@ -12,6 +13,7 @@ import { Media } from "@/payload/collections/media";
 import { Platforms } from "@/payload/collections/platforms";
 import { Subcategories } from "@/payload/collections/subcategories";
 import { Users } from "@/payload/collections/users";
+import { mcpTools } from "@/payload/mcp";
 import { env } from "@/shared/config/env";
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -23,8 +25,9 @@ export default buildConfig({
   collections: [Ads, Platforms, Categories, Subcategories, ContentTypes, Media, Users],
   db: postgresAdapter({
     pool: { connectionString: env.DATABASE_URL },
-    // Dev push would auto-sync this config onto whatever DATABASE_URL points at, and that
-    // is the production Neon database. Schema changes go through src/migrations only.
+    // Dev push silently diverges the database from src/migrations, which is how the
+    // Neon "dev" branch ended up with an unrecorded schema and a `dev` batch -1 row.
+    // Every environment goes through migrations so preview matches production.
     push: false,
   }),
   typescript: {
@@ -58,6 +61,28 @@ export default buildConfig({
         region: "auto",
         endpoint: `https://${env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
         forcePathStyle: true,
+      },
+    }),
+    mcpPlugin({
+      userCollection: "users",
+      collections: {
+        // Creating an ad requires attaching two uploads, which the generic create tool
+        // cannot do — importFrameioAd is the only creation path.
+        ads: {
+          description:
+            "Short-form video ads with brand, creator, classification and 1-10 ratings. Imported as drafts and published by a human.",
+          enabled: { find: true, update: true, create: false, delete: false },
+        },
+        media: { enabled: { find: true } },
+        platforms: { enabled: { find: true } },
+        categories: { enabled: { find: true } },
+        subcategories: { enabled: { find: true } },
+        "content-types": { enabled: { find: true } },
+      },
+      mcp: {
+        tools: mcpTools,
+        serverOptions: { serverInfo: { name: "AdCollection", version: "1.0.0" } },
+        handlerOptions: { maxDuration: 300 },
       },
     }),
   ],
