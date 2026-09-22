@@ -14,8 +14,11 @@ const csvStringArray = z
   .default([]);
 
 export const adFilterSchema = z.object({
+  adTypes: csvStringArray,
   categories: csvStringArray,
+  clients: csvStringArray,
   contentTypes: csvStringArray,
+  industries: csvStringArray,
   platforms: csvStringArray,
   search: z.string().trim().default(""),
   sort: z.enum(AD_SORT_VALUES).default("newest"),

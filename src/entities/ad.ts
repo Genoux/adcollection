@@ -1,4 +1,14 @@
-import type { Ad, Category, ContentType, Media, Platform, Subcategory } from "@/payload-types";
+import type {
+  Ad,
+  AdType,
+  Category,
+  Client,
+  ContentType,
+  Industry,
+  Media,
+  Platform,
+  Subcategory,
+} from "@/payload-types";
 import type { TaxonomyRef } from "./taxonomy";
 import { requirePopulated, toTaxonomyRef } from "./taxonomy";
 
@@ -30,7 +40,10 @@ export type AdDetail = AdListItem & {
   profilePictureUrl: string | null;
   creatorHandle: string | null;
   creatorProfileUrl: string | null;
+  client: TaxonomyRef | null;
+  industry: TaxonomyRef | null;
   subcategories: TaxonomyRef[];
+  adTypes: TaxonomyRef[];
   ratingAudienceGrab: number | null;
   ratingWatchability: number | null;
   ratingClarity: number | null;
@@ -43,7 +56,15 @@ function mediaUrl(value: number | Media | null | undefined, field: string): stri
   return requirePopulated(value, field)?.url ?? null;
 }
 
-function taxonomyRefs<T extends Category | ContentType | Platform | Subcategory>(
+function taxonomyRef<T extends Client | Industry>(
+  value: number | T | null | undefined,
+  field: string,
+): TaxonomyRef | null {
+  const doc = requirePopulated(value, field);
+  return doc ? toTaxonomyRef(doc) : null;
+}
+
+function taxonomyRefs<T extends AdType | Category | ContentType | Subcategory>(
   values: (number | T)[] | null | undefined,
   field: string,
 ): TaxonomyRef[] {
@@ -102,7 +123,10 @@ export function toAdDetail(ad: Ad): AdDetail | null {
     profilePictureUrl: mediaUrl(ad.profilePicture, "profilePicture"),
     creatorHandle: normalizeHandle(ad.creatorHandle),
     creatorProfileUrl: ad.creatorProfileUrl ?? null,
+    client: taxonomyRef(ad.client, "client"),
+    industry: taxonomyRef(ad.industry, "industry"),
     subcategories: taxonomyRefs(ad.subcategories, "subcategories"),
+    adTypes: taxonomyRefs(ad.adTypes, "adTypes"),
     ratingAudienceGrab: ad.ratingAudienceGrab ?? null,
     ratingWatchability: ad.ratingWatchability ?? null,
     ratingClarity: ad.ratingClarity ?? null,

@@ -27,6 +27,22 @@ describe("buildAdsWhere", () => {
     });
   });
 
+  it("adds in-filters for the client, industry and ad type facets", () => {
+    const where = buildAdsWhere(
+      adFilterSchema.parse({
+        clients: "dr-squatch",
+        industries: "beauty,fitness",
+        adTypes: "ugc,testimonial",
+      }),
+    );
+    expect(where).toEqual({
+      _status: { equals: "published" },
+      "client.slug": { in: ["dr-squatch"] },
+      "industry.slug": { in: ["beauty", "fitness"] },
+      "adTypes.slug": { in: ["ugc", "testimonial"] },
+    });
+  });
+
   it("ORs a case-insensitive contains search across title, caption and name", () => {
     const where = buildAdsWhere(adFilterSchema.parse({ search: "squatch" }));
     expect(where).toEqual({

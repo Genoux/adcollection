@@ -84,6 +84,8 @@ export function AdHeader({ ad }: AdHeaderProps) {
         <InfoRow label="Tags">
           <div className="flex flex-wrap gap-2">
             <Pill tone="platform">{ad.platform.name}</Pill>
+            {ad.client && <Pill tone="default">{ad.client.name}</Pill>}
+            {ad.industry && <Pill tone="default">{ad.industry.name}</Pill>}
             {ad.category && <Pill tone="default">{ad.category.name}</Pill>}
             {ad.subcategories.map((subcategory) => (
               <Pill key={subcategory.id} tone="default">
@@ -93,6 +95,11 @@ export function AdHeader({ ad }: AdHeaderProps) {
             {ad.contentTypes.map((contentType) => (
               <Pill key={contentType.id} tone="default">
                 {contentType.name}
+              </Pill>
+            ))}
+            {ad.adTypes.map((adType) => (
+              <Pill key={adType.id} tone="default">
+                {adType.name}
               </Pill>
             ))}
           </div>

@@ -5,53 +5,41 @@ import type { TaxonomyRef } from "@/entities/taxonomy";
 import { FilterDropdown } from "./filter-dropdown";
 
 const filterParsers = {
+  clients: parseAsArrayOf(parseAsString).withDefault([]),
+  industries: parseAsArrayOf(parseAsString).withDefault([]),
   categories: parseAsArrayOf(parseAsString).withDefault([]),
   contentTypes: parseAsArrayOf(parseAsString).withDefault([]),
+  adTypes: parseAsArrayOf(parseAsString).withDefault([]),
   platforms: parseAsArrayOf(parseAsString).withDefault([]),
 };
 
-interface FilterBarProps {
-  categories: TaxonomyRef[];
-  contentTypes: TaxonomyRef[];
-  platforms: TaxonomyRef[];
-}
+type FacetKey = keyof typeof filterParsers;
 
-export function FilterBar({ categories, contentTypes, platforms }: FilterBarProps) {
+const FACETS: readonly { key: FacetKey; label: string }[] = [
+  { key: "clients", label: "By Client" },
+  { key: "industries", label: "By Industry" },
+  { key: "categories", label: "By Category" },
+  { key: "contentTypes", label: "By Style" },
+  { key: "adTypes", label: "By Ad Type" },
+  { key: "platforms", label: "By Platform" },
+];
+
+type FilterBarProps = Record<FacetKey, TaxonomyRef[]>;
+
+export function FilterBar(facets: FilterBarProps) {
   const [filters, setFilters] = useQueryStates(filterParsers, { shallow: false });
-
-  const categoryOptions = categories.map((category) => ({
-    value: category.slug,
-    label: category.name,
-  }));
-  const contentTypeOptions = contentTypes.map((contentType) => ({
-    value: contentType.slug,
-    label: contentType.name,
-  }));
-  const platformOptions = platforms.map((platform) => ({
-    value: platform.slug,
-    label: platform.name,
-  }));
 
   return (
     <div className="flex flex-wrap items-center gap-filter-gap">
-      <FilterDropdown
-        label="By Category"
-        options={categoryOptions}
-        selected={filters.categories}
-        onChange={(values) => setFilters({ categories: values })}
-      />
-      <FilterDropdown
-        label="By Style"
-        options={contentTypeOptions}
-        selected={filters.contentTypes}
-        onChange={(values) => setFilters({ contentTypes: values })}
-      />
-      <FilterDropdown
-        label="By Platform"
-        options={platformOptions}
-        selected={filters.platforms}
-        onChange={(values) => setFilters({ platforms: values })}
-      />
+      {FACETS.map(({ key, label }) => (
+        <FilterDropdown
+          key={key}
+          label={label}
+          options={facets[key].map((ref) => ({ value: ref.slug, label: ref.name }))}
+          selected={filters[key]}
+          onChange={(values) => setFilters({ [key]: values })}
+        />
+      ))}
     </div>
   );
 }

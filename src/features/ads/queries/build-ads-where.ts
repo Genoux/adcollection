@@ -16,11 +16,20 @@ export function buildAdBySlugWhere(slug: string): Where {
 export function buildAdsWhere(filter: AdFilter): Where {
   const where: Where = { ...publishedOnly };
 
+  if (filter.adTypes.length > 0) {
+    where["adTypes.slug"] = { in: filter.adTypes };
+  }
   if (filter.categories.length > 0) {
     where["category.slug"] = { in: filter.categories };
   }
+  if (filter.clients.length > 0) {
+    where["client.slug"] = { in: filter.clients };
+  }
   if (filter.contentTypes.length > 0) {
     where["contentTypes.slug"] = { in: filter.contentTypes };
+  }
+  if (filter.industries.length > 0) {
+    where["industry.slug"] = { in: filter.industries };
   }
   if (filter.platforms.length > 0) {
     where["platform.slug"] = { in: filter.platforms };

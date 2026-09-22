@@ -1,8 +1,16 @@
-import type { Category, ContentType, Platform, Subcategory } from "@/payload-types";
+import type {
+  AdType,
+  Category,
+  Client,
+  ContentType,
+  Industry,
+  Platform,
+  Subcategory,
+} from "@/payload-types";
 
 export type TaxonomyRef = { id: number; name: string; slug: string };
 
-type TaxonomyDoc = Category | ContentType | Platform | Subcategory;
+type TaxonomyDoc = AdType | Category | Client | ContentType | Industry | Platform | Subcategory;
 
 // A bare id means the caller forgot `depth` — a bug worth crashing on. A null means
 // the referenced doc was deleted, which is ordinary data and must not take a page

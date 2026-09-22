@@ -1,5 +1,15 @@
 import { describe, expect, it } from "vitest";
-import type { Ad, Category, ContentType, Media, Platform, Subcategory } from "@/payload-types";
+import type {
+  Ad,
+  AdType,
+  Category,
+  Client,
+  ContentType,
+  Industry,
+  Media,
+  Platform,
+  Subcategory,
+} from "@/payload-types";
 import { toAdDetail, toAdListItem } from "./ad";
 
 const platform: Platform = {
@@ -27,6 +37,24 @@ const subcategory: Subcategory = {
   createdAt: "",
   updatedAt: "",
 };
+
+const client: Client = {
+  id: 5,
+  name: "Dr Squatch",
+  slug: "dr-squatch",
+  createdAt: "",
+  updatedAt: "",
+};
+
+const industry: Industry = {
+  id: 6,
+  name: "Personal Care",
+  slug: "personal-care",
+  createdAt: "",
+  updatedAt: "",
+};
+
+const adType: AdType = { id: 7, name: "UGC", slug: "ugc", createdAt: "", updatedAt: "" };
 
 const media = (id: number, url: string): Media => ({
   id,
@@ -57,9 +85,12 @@ function makeAd(overrides: Partial<Ad> = {}): Ad {
     creatorHandle: null,
     creatorProfileUrl: null,
     platform,
+    client: null,
+    industry: null,
     category: null,
     subcategories: null,
     contentTypes: null,
+    adTypes: null,
     ratingAudienceGrab: null,
     ratingWatchability: null,
     ratingClarity: null,
@@ -118,6 +149,20 @@ describe("toAdDetail", () => {
     const detail = toAdDetail(makeAd());
     expect(detail?.profilePictureUrl).toBeNull();
   });
+
+  it("maps the client, industry and ad type tags", () => {
+    const detail = toAdDetail(makeAd({ client, industry, adTypes: [adType] }));
+    expect(detail?.client).toEqual({ id: 5, name: "Dr Squatch", slug: "dr-squatch" });
+    expect(detail?.industry).toEqual({ id: 6, name: "Personal Care", slug: "personal-care" });
+    expect(detail?.adTypes).toEqual([{ id: 7, name: "UGC", slug: "ugc" }]);
+  });
+
+  it("leaves untagged ads with empty client, industry and ad types", () => {
+    const detail = toAdDetail(makeAd());
+    expect(detail?.client).toBeNull();
+    expect(detail?.industry).toBeNull();
+    expect(detail?.adTypes).toEqual([]);
+  });
 });
 
 describe("broken relationships", () => {
@@ -130,6 +175,7 @@ describe("broken relationships", () => {
   it("still throws on an unpopulated id, which is a depth bug rather than missing data", () => {
     expect(() => toAdListItem(makeAd({ thumbnail: 21 }))).toThrow(/depth/);
     expect(() => toAdDetail(makeAd({ contentTypes: [3] }))).toThrow(/depth/);
+    expect(() => toAdDetail(makeAd({ client: 5 }))).toThrow(/depth/);
   });
 
   it("skips a deleted optional taxonomy row rather than failing the whole ad", () => {

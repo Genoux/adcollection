@@ -7,8 +7,11 @@ import { ResultsGrid } from "@/features/ads/components/browse/results-grid";
 import { ResultsSkeleton } from "@/features/ads/components/browse/results-skeleton";
 import { getFeaturedAds } from "@/features/ads/queries/get-featured-ads";
 import { parseAdFilter } from "@/features/ads/schemas";
+import { getAdTypes } from "@/features/taxonomy/queries/get-ad-types";
 import { getCategories } from "@/features/taxonomy/queries/get-categories";
+import { getClients } from "@/features/taxonomy/queries/get-clients";
 import { getContentTypes } from "@/features/taxonomy/queries/get-content-types";
+import { getIndustries } from "@/features/taxonomy/queries/get-industries";
 import { getPlatforms } from "@/features/taxonomy/queries/get-platforms";
 import { Container } from "@/shared/components/layout/container";
 import { SectionHeader } from "@/shared/components/layout/section-header";
@@ -25,12 +28,16 @@ export default async function Home({ searchParams }: PageProps<"/">) {
   const resolvedSearchParams = await searchParams;
   const filter = parseAdFilter(resolvedSearchParams);
 
-  const [featuredAds, categories, contentTypes, platforms] = await Promise.all([
-    getFeaturedAds(),
-    getCategories(),
-    getContentTypes(),
-    getPlatforms(),
-  ]);
+  const [featuredAds, clients, industries, categories, contentTypes, adTypes, platforms] =
+    await Promise.all([
+      getFeaturedAds(),
+      getClients(),
+      getIndustries(),
+      getCategories(),
+      getContentTypes(),
+      getAdTypes(),
+      getPlatforms(),
+    ]);
 
   return (
     <>
@@ -57,7 +64,14 @@ export default async function Home({ searchParams }: PageProps<"/">) {
 
       <Container id="browse" className="mt-24 flex flex-col gap-8">
         <SectionHeader title="Browse & Filter">
-          <FilterBar categories={categories} contentTypes={contentTypes} platforms={platforms} />
+          <FilterBar
+            clients={clients}
+            industries={industries}
+            categories={categories}
+            contentTypes={contentTypes}
+            adTypes={adTypes}
+            platforms={platforms}
+          />
         </SectionHeader>
         <Suspense key={JSON.stringify(filter)} fallback={<ResultsSkeleton />}>
           <ResultsGrid filter={filter} />

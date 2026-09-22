@@ -25,8 +25,11 @@ describe("getAdsPage", () => {
   it("passes a parsed filter with defaults to the query", async () => {
     await getAdsPage({ platforms: "tiktok" });
     expect(getPublishedAds).toHaveBeenCalledWith({
+      adTypes: [],
       categories: [],
+      clients: [],
       contentTypes: [],
+      industries: [],
       platforms: ["tiktok"],
       search: "",
       sort: "newest",
