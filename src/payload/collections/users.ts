@@ -3,7 +3,7 @@ import { onlyLoggedIn } from "@/payload/access";
 
 export const Users: CollectionConfig = {
   slug: "users",
-  admin: { useAsTitle: "email" },
+  admin: { useAsTitle: "email", group: "System" },
   auth: true,
   access: {
     read: onlyLoggedIn,

@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 
 export default function FavoritesPage() {
   return (
-    <Container className="flex flex-1 flex-col gap-8 py-12">
+    <Container className="flex flex-1 flex-col gap-6 py-12">
       <div className="flex flex-col gap-2">
         <h1 className="text-page-h1 text-heading">Favorites</h1>
         <p className="text-subtle">The ads you&apos;ve saved for later, all in one place.</p>

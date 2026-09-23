@@ -3,6 +3,7 @@ import { onlyLoggedIn } from "@/payload/access";
 
 export const Media: CollectionConfig = {
   slug: "media",
+  admin: { group: "System" },
   access: {
     // Anonymous reads here would enumerate every upload, including the videos of
     // unpublished draft ads, each with a directly playable R2 URL. The public site

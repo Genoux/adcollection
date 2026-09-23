@@ -1,17 +1,14 @@
+import { ArrowRight } from "lucide-react";
 import type { Metadata } from "next";
-import { Suspense } from "react";
+import Link from "next/link";
+import { connection } from "next/server";
 import { AdCard } from "@/features/ads/components/ad-card";
 import { AdGrid } from "@/features/ads/components/ad-grid";
-import { FilterBar } from "@/features/ads/components/browse/filter-bar";
-import { ResultsGrid } from "@/features/ads/components/browse/results-grid";
-import { ResultsSkeleton } from "@/features/ads/components/browse/results-skeleton";
 import { getFeaturedAds } from "@/features/ads/queries/get-featured-ads";
-import { parseAdFilter } from "@/features/ads/schemas";
-import { getCategories } from "@/features/taxonomy/queries/get-categories";
-import { getContentTypes } from "@/features/taxonomy/queries/get-content-types";
-import { getPlatforms } from "@/features/taxonomy/queries/get-platforms";
+import { getLatestAds } from "@/features/ads/queries/get-latest-ads";
 import { Container } from "@/shared/components/layout/container";
 import { SectionHeader } from "@/shared/components/layout/section-header";
+import { Button } from "@/shared/components/ui/button";
 
 export const metadata: Metadata = {
   // The title template only applies to child segments, and this page shares the
@@ -21,16 +18,11 @@ export const metadata: Metadata = {
     "A deep dive into the strategy behind high-converting ad creative. Browse a curated library of the best-performing video ads, rated on audience grab, watchability, and clarity.",
 };
 
-export default async function Home({ searchParams }: PageProps<"/">) {
-  const resolvedSearchParams = await searchParams;
-  const filter = parseAdFilter(resolvedSearchParams);
-
-  const [featuredAds, categories, contentTypes, platforms] = await Promise.all([
-    getFeaturedAds(),
-    getCategories(),
-    getContentTypes(),
-    getPlatforms(),
-  ]);
+export default async function Home() {
+  // Without a request-time API this page would prerender at build, which needs the
+  // database and its current schema while migrations run in a separate CI job.
+  await connection();
+  const [featuredAds, latestAds] = await Promise.all([getFeaturedAds(), getLatestAds()]);
 
   return (
     <>
@@ -45,7 +37,7 @@ export default async function Home({ searchParams }: PageProps<"/">) {
       </Container>
 
       {featuredAds.length > 0 && (
-        <Container className="flex flex-col gap-8">
+        <Container className="flex flex-col gap-6">
           <SectionHeader title="Featured" />
           <AdGrid>
             {featuredAds.map((ad) => (
@@ -55,14 +47,22 @@ export default async function Home({ searchParams }: PageProps<"/">) {
         </Container>
       )}
 
-      <Container id="browse" className="mt-24 flex flex-col gap-8">
-        <SectionHeader title="Browse & Filter">
-          <FilterBar categories={categories} contentTypes={contentTypes} platforms={platforms} />
-        </SectionHeader>
-        <Suspense key={JSON.stringify(filter)} fallback={<ResultsSkeleton />}>
-          <ResultsGrid filter={filter} />
-        </Suspense>
-      </Container>
+      {latestAds.length > 0 && (
+        <Container className="mt-24 flex flex-col gap-5">
+          <SectionHeader title="Latest">
+            <Button asChild variant="subtle" size="sm">
+              <Link href="/ads" prefetch>
+                See all
+              </Link>
+            </Button>
+          </SectionHeader>
+          <AdGrid>
+            {latestAds.map((ad) => (
+              <AdCard key={ad.id} ad={ad} />
+            ))}
+          </AdGrid>
+        </Container>
+      )}
     </>
   );
 }

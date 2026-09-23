@@ -7,14 +7,20 @@ import { s3Storage } from "@payloadcms/storage-s3";
 import { buildConfig } from "payload";
 import sharp from "sharp";
 import { Ads } from "@/payload/collections/ads";
-import { Categories } from "@/payload/collections/categories";
-import { ContentTypes } from "@/payload/collections/content-types";
+import { Clients } from "@/payload/collections/clients";
 import { FrameioConnections } from "@/payload/collections/frameio-connections";
 import { McpOauthClients } from "@/payload/collections/mcp-oauth-clients";
 import { McpOauthGrants } from "@/payload/collections/mcp-oauth-grants";
 import { Media } from "@/payload/collections/media";
-import { Platforms } from "@/payload/collections/platforms";
-import { Subcategories } from "@/payload/collections/subcategories";
+import {
+  Angles,
+  ContentTypes,
+  Industries,
+  Markets,
+  Niches,
+  Objectives,
+  Platforms,
+} from "@/payload/collections/tags";
 import { Users } from "@/payload/collections/users";
 import { mcpTools } from "@/payload/mcp";
 import { mcpCollections } from "@/payload/mcp/collections";
@@ -30,10 +36,14 @@ export default buildConfig({
   editor: lexicalEditor({}),
   collections: [
     Ads,
-    Platforms,
-    Categories,
-    Subcategories,
+    Clients,
     ContentTypes,
+    Industries,
+    Niches,
+    Angles,
+    Platforms,
+    Objectives,
+    Markets,
     Media,
     Users,
     FrameioConnections,

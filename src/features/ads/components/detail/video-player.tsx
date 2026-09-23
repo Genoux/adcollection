@@ -13,7 +13,8 @@ export function VideoPlayer({ videoUrl, thumbnailUrl, title }: VideoPlayerProps)
         className="size-full object-cover"
         controls
         playsInline
-        preload="metadata"
+        // Buffered up front so pressing play starts instantly instead of waiting on the network.
+        preload="auto"
         poster={thumbnailUrl}
         aria-label={`${title} video`}
         // Uploads may be mp4, webm or quicktime. A <source type> the browser cannot

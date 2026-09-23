@@ -1,6 +1,14 @@
 import type { PayloadRequest } from "payload";
 
-type TaxonomySlug = "categories" | "content-types" | "platforms" | "subcategories";
+type TaxonomySlug =
+  | "angles"
+  | "clients"
+  | "content-types"
+  | "industries"
+  | "markets"
+  | "niches"
+  | "objectives"
+  | "platforms";
 
 async function findIdBySlug(
   req: PayloadRequest,

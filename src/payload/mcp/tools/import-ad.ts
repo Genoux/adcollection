@@ -5,6 +5,7 @@ import { deleteMedia } from "@/payload/frameio/media";
 import { withFrameio } from "@/payload/mcp/lib/auth";
 import { resolveTaxonomy, resolveTaxonomyMany } from "@/payload/mcp/lib/taxonomy";
 import { type McpTool, text } from "@/payload/mcp/lib/tool";
+import { LANGUAGE_OPTIONS, optionValues, PRODUCT_TYPE_OPTIONS } from "@/payload/tag-options";
 import { env } from "@/shared/config/env";
 import type { FrameioAuth } from "@/shared/lib/frameio/client";
 import { formatBytes } from "@/shared/lib/frameio/renditions";
@@ -16,27 +17,30 @@ const schema = z.object({
     .string()
     .max(60)
     .describe("Display caption with @handles, #hashtags and emojis removed."),
-  name: z.string().describe("Product or brand being promoted. Shown on tooltips."),
+  name: z.string().describe("Product being promoted. Shown on tooltips."),
   slug: z.string().describe("URL slug. Must be unique across all ads."),
   caption: z.string().min(8).max(100).optional(),
 
+  clientSlug: z
+    .string()
+    .describe("Slug of a clients document. Create the client in the admin first."),
+  contentTypeSlugs: z.array(z.string()).min(1).describe("Content type slugs, e.g. ugc, b-roll."),
   platformSlug: z.string().describe("Slug of a platforms document, e.g. tiktok."),
-  categorySlug: z.string().optional().describe("Slug of a categories document."),
-  subcategorySlugs: z.array(z.string()).optional(),
-  contentTypeSlugs: z.array(z.string()).optional(),
+  industrySlug: z.string().optional(),
+  nicheSlugs: z.array(z.string()).optional(),
+  angleSlugs: z.array(z.string()).optional().describe("Angle slugs, e.g. testimonial, unboxing."),
+  objectiveSlug: z.string().optional().describe("Objective slug, e.g. awareness, conversion."),
+  marketSlugs: z.array(z.string()).optional().describe("Market slugs, e.g. us, canada."),
+  productType: z.enum(optionValues(PRODUCT_TYPE_OPTIONS)).optional(),
+  languages: z.array(z.enum(optionValues(LANGUAGE_OPTIONS))).optional(),
 
   madeWithInbeat: z.boolean().optional(),
   originalUrl: z.string().optional().describe("Link to the original ad if not made with inBeat."),
 
-  companyName: z.string().optional(),
-  companyWebsiteUrl: z.string().optional(),
-  companyWebsiteDisplay: z.string().optional().describe("Shortened version of the website link."),
-  brandHandleName: z.string().min(5).max(25).optional().describe("e.g. @dr.squatch"),
-  brandHandleUrl: z.string().optional(),
   soundName: z.string().optional(),
   soundUrl: z.string().optional(),
 
-  creatorHandle: z.string().optional(),
+  creatorHandle: z.string().optional().describe("Creator handle without @."),
   creatorProfileUrl: z.string().optional(),
 
   ratingAudienceGrab: z.number().int().min(1).max(10).optional(),
@@ -63,7 +67,7 @@ async function assertSlugAvailable(req: PayloadRequest, slug: string) {
 export const importFrameioAd: McpTool = {
   name: "importFrameioAd",
   description:
-    "Import a Frame.io video as a draft ad. Downloads the web-sized rendition and its poster frame into Media, resolves the taxonomy slugs, and creates the ad unpublished for human review. Returns the admin edit URL.",
+    "Import a Frame.io video as a draft ad. Downloads the web-sized rendition and its poster frame into Media, resolves the tag slugs, and creates the ad unpublished for human review. Returns the admin edit URL.",
   parameters: schema.shape,
   handler: (args, req) => withFrameio(req, (auth) => runImport(auth, args as ImportArgs, req)),
 };
@@ -71,12 +75,17 @@ export const importFrameioAd: McpTool = {
 async function runImport(auth: FrameioAuth, input: ImportArgs, req: PayloadRequest) {
   await assertSlugAvailable(req, input.slug);
 
-  const [platform, category, subcategories, contentTypes] = await Promise.all([
-    resolveTaxonomy(req, "platforms", input.platformSlug),
-    input.categorySlug ? resolveTaxonomy(req, "categories", input.categorySlug) : undefined,
-    resolveTaxonomyMany(req, "subcategories", input.subcategorySlugs ?? []),
-    resolveTaxonomyMany(req, "content-types", input.contentTypeSlugs ?? []),
-  ]);
+  const [client, contentTypes, platform, industry, niches, angles, objective, markets] =
+    await Promise.all([
+      resolveTaxonomy(req, "clients", input.clientSlug),
+      resolveTaxonomyMany(req, "content-types", input.contentTypeSlugs),
+      resolveTaxonomy(req, "platforms", input.platformSlug),
+      input.industrySlug ? resolveTaxonomy(req, "industries", input.industrySlug) : undefined,
+      resolveTaxonomyMany(req, "niches", input.nicheSlugs ?? []),
+      resolveTaxonomyMany(req, "angles", input.angleSlugs ?? []),
+      input.objectiveSlug ? resolveTaxonomy(req, "objectives", input.objectiveSlug) : undefined,
+      resolveTaxonomyMany(req, "markets", input.marketSlugs ?? []),
+    ]);
 
   const { file, posterAsset, thumbnail, video, videoAsset } = await importFrameioVideo(
     req,
@@ -100,19 +109,22 @@ async function runImport(auth: FrameioAuth, input: ImportArgs, req: PayloadReque
         thumbnail: thumbnail.id,
         madeWithInbeat: input.madeWithInbeat,
         originalUrl: input.originalUrl,
-        companyName: input.companyName,
-        companyWebsiteUrl: input.companyWebsiteUrl,
-        companyWebsiteDisplay: input.companyWebsiteDisplay,
-        brandHandleName: input.brandHandleName,
-        brandHandleUrl: input.brandHandleUrl,
+        client,
+        creator: {
+          handle: input.creatorHandle?.trim().replace(/^@+/, ""),
+          profileUrl: input.creatorProfileUrl,
+        },
         soundName: input.soundName,
         soundUrl: input.soundUrl,
-        creatorHandle: input.creatorHandle,
-        creatorProfileUrl: input.creatorProfileUrl,
-        platform,
-        category,
-        subcategories,
         contentTypes,
+        platform,
+        industry,
+        niches,
+        angles,
+        objective,
+        markets,
+        productType: input.productType,
+        languages: input.languages,
         ratingAudienceGrab: input.ratingAudienceGrab,
         ratingWatchability: input.ratingWatchability,
         ratingClarity: input.ratingClarity,
