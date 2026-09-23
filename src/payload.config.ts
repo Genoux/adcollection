@@ -1,6 +1,7 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { postgresAdapter } from "@payloadcms/db-postgres";
+import { mcpPlugin } from "@payloadcms/plugin-mcp";
 import { lexicalEditor } from "@payloadcms/richtext-lexical";
 import { s3Storage } from "@payloadcms/storage-s3";
 import { buildConfig } from "payload";
@@ -8,10 +9,17 @@ import sharp from "sharp";
 import { Ads } from "@/payload/collections/ads";
 import { Categories } from "@/payload/collections/categories";
 import { ContentTypes } from "@/payload/collections/content-types";
+import { FrameioConnections } from "@/payload/collections/frameio-connections";
+import { McpOauthClients } from "@/payload/collections/mcp-oauth-clients";
+import { McpOauthGrants } from "@/payload/collections/mcp-oauth-grants";
 import { Media } from "@/payload/collections/media";
 import { Platforms } from "@/payload/collections/platforms";
 import { Subcategories } from "@/payload/collections/subcategories";
 import { Users } from "@/payload/collections/users";
+import { mcpTools } from "@/payload/mcp";
+import { mcpCollections } from "@/payload/mcp/collections";
+import { mcpAuthChallenge, mcpOverrideAuth } from "@/payload/mcp/oauth/plugin";
+import { AUTHORIZE_VIEW_PATH } from "@/payload/mcp/oauth/urls";
 import { env } from "@/shared/config/env";
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -20,11 +28,23 @@ export default buildConfig({
   secret: env.PAYLOAD_SECRET,
   sharp,
   editor: lexicalEditor({}),
-  collections: [Ads, Platforms, Categories, Subcategories, ContentTypes, Media, Users],
+  collections: [
+    Ads,
+    Platforms,
+    Categories,
+    Subcategories,
+    ContentTypes,
+    Media,
+    Users,
+    FrameioConnections,
+    McpOauthClients,
+    McpOauthGrants,
+  ],
   db: postgresAdapter({
     pool: { connectionString: env.DATABASE_URL },
-    // Dev push would auto-sync this config onto whatever DATABASE_URL points at, and that
-    // is the production Neon database. Schema changes go through src/migrations only.
+    // Dev push silently diverges the database from src/migrations, which is how the
+    // Neon "dev" branch ended up with an unrecorded schema and a `dev` batch -1 row.
+    // Every environment goes through migrations so preview matches production.
     push: false,
   }),
   typescript: {
@@ -33,6 +53,19 @@ export default buildConfig({
   admin: {
     importMap: {
       baseDir: path.resolve(dirname, "app/(payload)"),
+    },
+    components: {
+      afterNavLinks: ["@/payload/admin/integrations/nav-link#IntegrationsNavLink"],
+      views: {
+        integrations: {
+          Component: "@/payload/admin/integrations/view#IntegrationsView",
+          path: "/integrations",
+        },
+        mcpAuthorize: {
+          Component: "@/payload/admin/mcp-authorize/view#McpAuthorizeView",
+          path: AUTHORIZE_VIEW_PATH,
+        },
+      },
     },
   },
   plugins: [
@@ -60,5 +93,16 @@ export default buildConfig({
         forcePathStyle: true,
       },
     }),
+    mcpPlugin({
+      userCollection: "users",
+      collections: mcpCollections,
+      overrideAuth: mcpOverrideAuth,
+      mcp: {
+        tools: mcpTools,
+        serverOptions: { serverInfo: { name: "AdCollection", version: "1.0.0" } },
+        handlerOptions: { maxDuration: 300 },
+      },
+    }),
+    mcpAuthChallenge(),
   ],
 });

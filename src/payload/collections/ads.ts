@@ -54,7 +54,22 @@ export const Ads: CollectionConfig = {
         {
           label: "Media",
           fields: [
-            { name: "video", type: "upload", relationTo: "media", required: true },
+            {
+              name: "video",
+              type: "upload",
+              relationTo: "media",
+              required: true,
+              admin: {
+                components: {
+                  afterInput: [
+                    {
+                      path: "@/payload/admin/frameio-picker/field#FrameioPickerField",
+                      clientProps: { thumbnailPath: "thumbnail" },
+                    },
+                  ],
+                },
+              },
+            },
             { name: "thumbnail", type: "upload", relationTo: "media", required: true },
             {
               name: "madeWithInbeat",

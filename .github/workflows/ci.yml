@@ -1,0 +1,68 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.head_ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+# The Payload config validates these at import. Nothing here connects to them except
+# DATABASE_URL in the migrate job, which overrides it with a real secret.
+env:
+  DATABASE_URL: postgres://ci:ci@localhost:5432/ci
+  PAYLOAD_SECRET: ci-placeholder
+  R2_ACCOUNT_ID: ci
+  R2_ACCESS_KEY_ID: ci
+  R2_SECRET_ACCESS_KEY: ci
+  R2_BUCKET_NAME: ci
+  NEXT_PUBLIC_R2_PUBLIC_BASE_URL: https://r2.example.com
+  NEXT_PUBLIC_SITE_URL: https://adcollection-inbeat.vercel.app
+
+jobs:
+  check:
+    name: Lint, typecheck, tests, migration drift
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: package.json
+
+      - run: bun install --frozen-lockfile
+      - run: bun run lint
+      - run: bun run typecheck
+      - run: bun run test
+      - run: bun run migrate:check
+
+  migrate-dev:
+    name: Migrate the Neon dev branch
+    needs: check
+    # Fork PRs get no secrets, and must not reach the shared database anyway.
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    environment: Preview
+    # Previews and local dev share this branch; one migration run at a time.
+    concurrency:
+      group: migrate-dev
+      cancel-in-progress: false
+    # Bounds the case that hung a Vercel build for 41 minutes: an ALTER TABLE queued
+    # behind another session's lock waits forever by default.
+    timeout-minutes: 10
+    env:
+      DATABASE_URL: ${{ secrets.DEV_DATABASE_URL }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: package.json
+
+      - run: bun install --frozen-lockfile
+      - run: bun run migrate

@@ -64,6 +64,7 @@ export type SupportedTimezones =
 export interface Config {
   auth: {
     users: UserAuthOperations;
+    'payload-mcp-api-keys': PayloadMcpApiKeyAuthOperations;
   };
   blocks: {};
   collections: {
@@ -74,6 +75,10 @@ export interface Config {
     'content-types': ContentType;
     media: Media;
     users: User;
+    'frameio-connections': FrameioConnection;
+    'mcp-oauth-clients': McpOauthClient;
+    'mcp-oauth-grants': McpOauthGrant;
+    'payload-mcp-api-keys': PayloadMcpApiKey;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -88,6 +93,10 @@ export interface Config {
     'content-types': ContentTypesSelect<false> | ContentTypesSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
+    'frameio-connections': FrameioConnectionsSelect<false> | FrameioConnectionsSelect<true>;
+    'mcp-oauth-clients': McpOauthClientsSelect<false> | McpOauthClientsSelect<true>;
+    'mcp-oauth-grants': McpOauthGrantsSelect<false> | McpOauthGrantsSelect<true>;
+    'payload-mcp-api-keys': PayloadMcpApiKeysSelect<false> | PayloadMcpApiKeysSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -103,13 +112,31 @@ export interface Config {
   widgets: {
     collections: CollectionsWidget;
   };
-  user: User;
+  user: User | PayloadMcpApiKey;
   jobs: {
     tasks: unknown;
     workflows: unknown;
   };
 }
 export interface UserAuthOperations {
+  forgotPassword: {
+    email: string;
+    password: string;
+  };
+  login: {
+    email: string;
+    password: string;
+  };
+  registerFirstUser: {
+    email: string;
+    password: string;
+  };
+  unlock: {
+    email: string;
+    password: string;
+  };
+}
+export interface PayloadMcpApiKeyAuthOperations {
   forgotPassword: {
     email: string;
     password: string;
@@ -284,6 +311,147 @@ export interface User {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "frameio-connections".
+ */
+export interface FrameioConnection {
+  id: number;
+  user: number | User;
+  accessToken?: string | null;
+  refreshToken?: string | null;
+  expiresAt?: string | null;
+  /**
+   * Discovered from /v4/accounts when the connection is made.
+   */
+  accountId?: string | null;
+  accountName?: string | null;
+  authState?: string | null;
+  authStateExpiresAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "mcp-oauth-clients".
+ */
+export interface McpOauthClient {
+  id: number;
+  clientId: string;
+  clientName?: string | null;
+  redirectUris:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "mcp-oauth-grants".
+ */
+export interface McpOauthGrant {
+  id: number;
+  user: number | User;
+  client: number | McpOauthClient;
+  redirectUri: string;
+  codeHash?: string | null;
+  codeChallenge?: string | null;
+  codeExpiresAt?: string | null;
+  accessTokenHash?: string | null;
+  accessExpiresAt?: string | null;
+  refreshTokenHash?: string | null;
+  previousRefreshTokenHash?: string | null;
+  refreshExpiresAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * API keys control which collections, resources, tools, and prompts MCP clients can access
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "payload-mcp-api-keys".
+ */
+export interface PayloadMcpApiKey {
+  id: number;
+  /**
+   * The user that the API key is associated with.
+   */
+  user: number | User;
+  /**
+   * A useful label for the API key.
+   */
+  label?: string | null;
+  /**
+   * The purpose of the API key.
+   */
+  description?: string | null;
+  ads?: {
+    /**
+     * Allow clients to find ads.
+     */
+    find?: boolean | null;
+    /**
+     * Allow clients to update ads.
+     */
+    update?: boolean | null;
+  };
+  media?: {
+    /**
+     * Allow clients to find media.
+     */
+    find?: boolean | null;
+  };
+  platforms?: {
+    /**
+     * Allow clients to find platforms.
+     */
+    find?: boolean | null;
+  };
+  categories?: {
+    /**
+     * Allow clients to find categories.
+     */
+    find?: boolean | null;
+  };
+  subcategories?: {
+    /**
+     * Allow clients to find subcategories.
+     */
+    find?: boolean | null;
+  };
+  contentTypes?: {
+    /**
+     * Allow clients to find content-types.
+     */
+    find?: boolean | null;
+  };
+  'payload-mcp-tool'?: {
+    /**
+     * Browse Frame.io. Called with no arguments it lists every project and its root folder id; called with a folderId it lists that folder's contents. Use it to find the file id of a video before calling importFrameioAd.
+     */
+    frameioBrowse?: boolean | null;
+    /**
+     * Show a Frame.io file's metadata and the size of every rendition available for import, flagging which ones fit under the web size limit. Use this to confirm a file is importable before calling importFrameioAd.
+     */
+    frameioInspectFile?: boolean | null;
+    /**
+     * Import a Frame.io video as a draft ad. Downloads the web-sized rendition and its poster frame into Media, resolves the taxonomy slugs, and creates the ad unpublished for human review. Returns the admin edit URL.
+     */
+    importFrameioAd?: boolean | null;
+  };
+  updatedAt: string;
+  createdAt: string;
+  enableAPIKey?: boolean | null;
+  apiKey?: string | null;
+  apiKeyIndex?: string | null;
+  collection: 'payload-mcp-api-keys';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
@@ -333,12 +501,33 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'users';
         value: number | User;
+      } | null)
+    | ({
+        relationTo: 'frameio-connections';
+        value: number | FrameioConnection;
+      } | null)
+    | ({
+        relationTo: 'mcp-oauth-clients';
+        value: number | McpOauthClient;
+      } | null)
+    | ({
+        relationTo: 'mcp-oauth-grants';
+        value: number | McpOauthGrant;
+      } | null)
+    | ({
+        relationTo: 'payload-mcp-api-keys';
+        value: number | PayloadMcpApiKey;
       } | null);
   globalSlug?: string | null;
-  user: {
-    relationTo: 'users';
-    value: number | User;
-  };
+  user:
+    | {
+        relationTo: 'users';
+        value: number | User;
+      }
+    | {
+        relationTo: 'payload-mcp-api-keys';
+        value: number | PayloadMcpApiKey;
+      };
   updatedAt: string;
   createdAt: string;
 }
@@ -348,10 +537,15 @@ export interface PayloadLockedDocument {
  */
 export interface PayloadPreference {
   id: number;
-  user: {
-    relationTo: 'users';
-    value: number | User;
-  };
+  user:
+    | {
+        relationTo: 'users';
+        value: number | User;
+      }
+    | {
+        relationTo: 'payload-mcp-api-keys';
+        value: number | PayloadMcpApiKey;
+      };
   key?: string | null;
   value?:
     | {
@@ -494,6 +688,104 @@ export interface UsersSelect<T extends boolean = true> {
         createdAt?: T;
         expiresAt?: T;
       };
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "frameio-connections_select".
+ */
+export interface FrameioConnectionsSelect<T extends boolean = true> {
+  user?: T;
+  accessToken?: T;
+  refreshToken?: T;
+  expiresAt?: T;
+  accountId?: T;
+  accountName?: T;
+  authState?: T;
+  authStateExpiresAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "mcp-oauth-clients_select".
+ */
+export interface McpOauthClientsSelect<T extends boolean = true> {
+  clientId?: T;
+  clientName?: T;
+  redirectUris?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "mcp-oauth-grants_select".
+ */
+export interface McpOauthGrantsSelect<T extends boolean = true> {
+  user?: T;
+  client?: T;
+  redirectUri?: T;
+  codeHash?: T;
+  codeChallenge?: T;
+  codeExpiresAt?: T;
+  accessTokenHash?: T;
+  accessExpiresAt?: T;
+  refreshTokenHash?: T;
+  previousRefreshTokenHash?: T;
+  refreshExpiresAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "payload-mcp-api-keys_select".
+ */
+export interface PayloadMcpApiKeysSelect<T extends boolean = true> {
+  user?: T;
+  label?: T;
+  description?: T;
+  ads?:
+    | T
+    | {
+        find?: T;
+        update?: T;
+      };
+  media?:
+    | T
+    | {
+        find?: T;
+      };
+  platforms?:
+    | T
+    | {
+        find?: T;
+      };
+  categories?:
+    | T
+    | {
+        find?: T;
+      };
+  subcategories?:
+    | T
+    | {
+        find?: T;
+      };
+  contentTypes?:
+    | T
+    | {
+        find?: T;
+      };
+  'payload-mcp-tool'?:
+    | T
+    | {
+        frameioBrowse?: T;
+        frameioInspectFile?: T;
+        importFrameioAd?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+  enableAPIKey?: T;
+  apiKey?: T;
+  apiKeyIndex?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
