@@ -7,6 +7,7 @@ import * as migration_20260922_182127_mcp_oauth from './20260922_182127_mcp_oaut
 import * as migration_20260923_155322_tag_restructure from './20260923_155322_tag_restructure';
 import * as migration_20260923_155741_content_types from './20260923_155741_content_types';
 import * as migration_20260923_192250_sort_title from './20260923_192250_sort_title';
+import * as migration_20260923_201728_ad_collections from './20260923_201728_ad_collections';
 
 export const migrations = [
   {
@@ -52,6 +53,11 @@ export const migrations = [
   {
     up: migration_20260923_192250_sort_title.up,
     down: migration_20260923_192250_sort_title.down,
-    name: '20260923_192250_sort_title'
+    name: '20260923_192250_sort_title',
+  },
+  {
+    up: migration_20260923_201728_ad_collections.up,
+    down: migration_20260923_201728_ad_collections.down,
+    name: '20260923_201728_ad_collections'
   },
 ];

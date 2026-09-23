@@ -69,6 +69,7 @@ export interface Config {
   blocks: {};
   collections: {
     ads: Ad;
+    'ad-collections': AdCollection;
     clients: Client;
     'content-types': ContentType;
     industries: Industry;
@@ -91,6 +92,7 @@ export interface Config {
   collectionsJoins: {};
   collectionsSelect: {
     ads: AdsSelect<false> | AdsSelect<true>;
+    'ad-collections': AdCollectionsSelect<false> | AdCollectionsSelect<true>;
     clients: ClientsSelect<false> | ClientsSelect<true>;
     'content-types': ContentTypesSelect<false> | ContentTypesSelect<true>;
     industries: IndustriesSelect<false> | IndustriesSelect<true>;
@@ -359,6 +361,22 @@ export interface Market {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ad-collections".
+ */
+export interface AdCollection {
+  id: number;
+  title: string;
+  /**
+   * Shown under the title on the shared page.
+   */
+  description?: string | null;
+  ads?: (number | Ad)[] | null;
+  shareId?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "users".
  */
 export interface User {
@@ -576,6 +594,10 @@ export interface PayloadLockedDocument {
         value: number | Ad;
       } | null)
     | ({
+        relationTo: 'ad-collections';
+        value: number | AdCollection;
+      } | null)
+    | ({
         relationTo: 'clients';
         value: number | Client;
       } | null)
@@ -726,6 +748,18 @@ export interface AdsSelect<T extends boolean = true> {
   updatedAt?: T;
   createdAt?: T;
   _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ad-collections_select".
+ */
+export interface AdCollectionsSelect<T extends boolean = true> {
+  title?: T;
+  description?: T;
+  ads?: T;
+  shareId?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

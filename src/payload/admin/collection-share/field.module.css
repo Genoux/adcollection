@@ -1,0 +1,27 @@
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--base) * 0.6);
+  margin-bottom: calc(var(--base) * 1.5);
+}
+
+.label {
+  font-weight: 600;
+  margin: 0;
+}
+
+.url:global(.field-type) {
+  margin: 0;
+}
+
+.actions {
+  display: flex;
+  gap: calc(var(--base) * 0.5);
+}
+
+.hint {
+  color: var(--theme-elevation-500);
+  font-size: 0.875rem;
+  line-height: 1.4;
+  margin: 0;
+}
