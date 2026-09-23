@@ -177,11 +177,12 @@ export interface Ad {
    */
   name: string;
   slug: string;
+  sortTitle?: string | null;
   caption?: string | null;
   video: number | Media;
   thumbnail: number | Media;
   /**
-   * Was this ad made by inBeat Agency?
+   * Was this ad made using inBeat or by inBeat Agency?
    */
   madeWithInbeat?: boolean | null;
   /**
@@ -690,6 +691,7 @@ export interface AdsSelect<T extends boolean = true> {
   thumbnailTitle?: T;
   name?: T;
   slug?: T;
+  sortTitle?: T;
   caption?: T;
   video?: T;
   thumbnail?: T;

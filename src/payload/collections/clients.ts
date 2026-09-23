@@ -1,5 +1,6 @@
 import type { CollectionConfig } from "payload";
 import { anyoneCanRead, onlyLoggedIn } from "@/payload/access";
+import { revalidatePublicSite } from "@/payload/hooks/revalidate-public-site";
 
 export const Clients: CollectionConfig = {
   slug: "clients",
@@ -10,6 +11,7 @@ export const Clients: CollectionConfig = {
     update: onlyLoggedIn,
     delete: onlyLoggedIn,
   },
+  hooks: revalidatePublicSite,
   fields: [
     { name: "name", type: "text", required: true },
     { name: "slug", type: "text", required: true, unique: true, index: true },

@@ -7,7 +7,7 @@ interface SectionHeaderProps {
 
 export function SectionHeader({ title, children }: SectionHeaderProps) {
   return (
-    <div className="flex flex-wrap items-center justify-between gap-4 border-b border-hairline pb-section-rule">
+    <div className="flex flex-wrap items-center justify-between">
       <h2 className="text-section-title text-heading">{title}</h2>
       {children}
     </div>

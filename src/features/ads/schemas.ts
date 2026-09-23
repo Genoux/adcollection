@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const AD_SORT_VALUES = ["newest", "score"] as const;
+export const AD_SORT_VALUES = ["newest", "oldest", "score", "title-asc", "title-desc"] as const;
 
 export type AdSort = (typeof AD_SORT_VALUES)[number];
 
@@ -19,6 +19,8 @@ export const adFilterSchema = z.object({
   angles: csvStringArray,
   platforms: csvStringArray,
   objectives: csvStringArray,
+  niches: csvStringArray,
+  markets: csvStringArray,
   search: z.string().trim().default(""),
   sort: z.enum(AD_SORT_VALUES).default("newest"),
   cursor: z.coerce.number().int().positive().optional(),

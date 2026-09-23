@@ -1,6 +1,8 @@
 import type { CollectionConfig } from "payload";
 import { onlyLoggedIn, publishedOrLoggedIn } from "@/payload/access";
+import { sortTitleField } from "@/payload/fields/sort-title";
 import { applyOverallScore } from "@/payload/hooks/compute-overall-score";
+import { revalidatePublicSite } from "@/payload/hooks/revalidate-public-site";
 import { LANGUAGE_OPTIONS, PRODUCT_TYPE_OPTIONS } from "@/payload/tag-options";
 
 const HIGHLIGHT_METRIC_OPTIONS = [
@@ -43,6 +45,7 @@ export const Ads: CollectionConfig = {
               admin: { description: "Product being promoted. Shown on tooltips." },
             },
             { name: "slug", type: "text", required: true, unique: true, index: true },
+            sortTitleField,
             {
               name: "caption",
               type: "text",
@@ -157,6 +160,7 @@ export const Ads: CollectionConfig = {
     },
   ],
   hooks: {
+    ...revalidatePublicSite,
     beforeChange: [({ data, originalDoc }) => applyOverallScore({ data, originalDoc })],
   },
 };

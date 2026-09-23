@@ -88,12 +88,12 @@ export function CreatorCard({ ad }: CreatorCardProps) {
           </a>
         ) : (
           <div className="flex flex-col gap-6">
-            <div className="flex flex-col gap-1">
-              <p className="border-t border-hairline pt-6 text-label text-black/60">
-                Creator Credits
-              </p>
-              {creator &&
-                (creator.profileUrl ? (
+            {creator && (
+              <div className="flex flex-col gap-1">
+                <p className="border-t border-hairline pt-6 text-label text-black/60">
+                  Creator Credits
+                </p>
+                {creator.profileUrl ? (
                   <a
                     href={creator.profileUrl}
                     target="_blank"
@@ -104,15 +104,11 @@ export function CreatorCard({ ad }: CreatorCardProps) {
                   </a>
                 ) : (
                   <span className="font-medium text-heading">@{creator.handle}</span>
-                ))}
-            </div>
+                )}
+              </div>
+            )}
             {originalUrl && (
-              <a
-                href={originalUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block rounded-sm px-6 py-3 text-center leading-6 bg-black/10 text-black transition-colors hover:bg-black hover:text-white"
-              >
+              <a href={originalUrl} target="_blank" rel="noopener noreferrer" className={ctaButton}>
                 Link to Original
               </a>
             )}

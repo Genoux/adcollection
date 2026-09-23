@@ -30,6 +30,8 @@ describe("getAdsPage", () => {
       angles: [],
       platforms: ["tiktok"],
       objectives: [],
+      niches: [],
+      markets: [],
       search: "",
       sort: "newest",
       limit: 24,

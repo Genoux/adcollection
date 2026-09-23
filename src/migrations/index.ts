@@ -6,6 +6,7 @@ import * as migration_20260922_170608_frameio_account_name from './20260922_1706
 import * as migration_20260922_182127_mcp_oauth from './20260922_182127_mcp_oauth';
 import * as migration_20260923_155322_tag_restructure from './20260923_155322_tag_restructure';
 import * as migration_20260923_155741_content_types from './20260923_155741_content_types';
+import * as migration_20260923_192250_sort_title from './20260923_192250_sort_title';
 
 export const migrations = [
   {
@@ -46,6 +47,11 @@ export const migrations = [
   {
     up: migration_20260923_155741_content_types.up,
     down: migration_20260923_155741_content_types.down,
-    name: '20260923_155741_content_types'
+    name: '20260923_155741_content_types',
+  },
+  {
+    up: migration_20260923_192250_sort_title.up,
+    down: migration_20260923_192250_sort_title.down,
+    name: '20260923_192250_sort_title'
   },
 ];

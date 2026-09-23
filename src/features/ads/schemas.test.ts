@@ -11,6 +11,8 @@ describe("adFilterSchema", () => {
       angles: [],
       platforms: [],
       objectives: [],
+      niches: [],
+      markets: [],
       search: "",
       sort: "newest",
       limit: 24,

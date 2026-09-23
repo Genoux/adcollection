@@ -27,29 +27,42 @@ describe("buildAdsWhere", () => {
     });
   });
 
-  it("ORs a case-insensitive contains search across title, caption and name", () => {
-    const where = buildAdsWhere(adFilterSchema.parse({ search: "squatch" }));
+  it("adds in-filters for niches and markets", () => {
+    const where = buildAdsWhere(adFilterSchema.parse({ niches: "skincare", markets: "us,ca" }));
     expect(where).toEqual({
       _status: { equals: "published" },
-      or: [
-        { thumbnailTitle: { contains: "squatch" } },
-        { caption: { contains: "squatch" } },
-        { name: { contains: "squatch" } },
-      ],
+      "niches.slug": { in: ["skincare"] },
+      "markets.slug": { in: ["us", "ca"] },
     });
+  });
+
+  it("matches a search word against ad text, credits and tag names", () => {
+    const where = buildAdsWhere(adFilterSchema.parse({ search: "squatch" }));
+    const paths = where.and?.[0]?.or?.map((condition) => Object.keys(condition)[0]);
+    expect(paths).toEqual(
+      expect.arrayContaining([
+        "thumbnailTitle",
+        "caption",
+        "name",
+        "creator.handle",
+        "client.name",
+        "niches.name",
+        "markets.name",
+      ]),
+    );
+    expect(where.and?.[0]?.or?.[0]).toEqual({ thumbnailTitle: { contains: "squatch" } });
+  });
+
+  it("requires every search word to match, ignoring leading @ and #", () => {
+    const where = buildAdsWhere(adFilterSchema.parse({ search: "  @drsquatch  #skincare " }));
+    const words = where.and?.map((clause) => clause.or?.[0]?.thumbnailTitle);
+    expect(words).toEqual([{ contains: "drsquatch" }, { contains: "skincare" }]);
   });
 
   it("combines facets and search", () => {
     const where = buildAdsWhere(adFilterSchema.parse({ platforms: "tiktok", search: "dr" }));
-    expect(where).toEqual({
-      _status: { equals: "published" },
-      "platform.slug": { in: ["tiktok"] },
-      or: [
-        { thumbnailTitle: { contains: "dr" } },
-        { caption: { contains: "dr" } },
-        { name: { contains: "dr" } },
-      ],
-    });
+    expect(where["platform.slug"]).toEqual({ in: ["tiktok"] });
+    expect(where.and).toHaveLength(1);
   });
 });
 
