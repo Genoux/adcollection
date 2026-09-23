@@ -19,7 +19,7 @@ export async function generateMetadata({
   if (!ad || ad.platform.slug !== platform) return {};
 
   const description =
-    ad.caption ?? `${ad.thumbnailTitle} by ${ad.companyName} on ${ad.platform.name}.`;
+    ad.caption ?? `${ad.thumbnailTitle} by ${ad.client?.name ?? ad.name} on ${ad.platform.name}.`;
 
   return {
     title: ad.thumbnailTitle,

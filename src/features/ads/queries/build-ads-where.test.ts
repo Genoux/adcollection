@@ -10,11 +10,11 @@ describe("buildAdsWhere", () => {
 
   it("adds an in-filter per taxonomy facet", () => {
     const where = buildAdsWhere(
-      adFilterSchema.parse({ categories: "beauty", platforms: "tiktok,instagram" }),
+      adFilterSchema.parse({ industries: "beauty", platforms: "tiktok,instagram" }),
     );
     expect(where).toEqual({
       _status: { equals: "published" },
-      "category.slug": { in: ["beauty"] },
+      "industry.slug": { in: ["beauty"] },
       "platform.slug": { in: ["tiktok", "instagram"] },
     });
   });

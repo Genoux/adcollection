@@ -5,16 +5,16 @@ import { getPayloadClient } from "@/shared/lib/payload";
 
 const RELATED_LIMIT = 4;
 
+const idOf = (value: number | { id: number }) => (typeof value === "number" ? value : value.id);
+
 export const getRelatedAds = cache(async (adId: number) => {
   const payload = await getPayloadClient();
   const current = (await payload.findByID({ collection: "ads", id: adId, depth: 0 })) as Ad;
 
-  const categoryId = typeof current.category === "number" ? current.category : current.category?.id;
-  const contentTypeIds = (current.contentTypes ?? []).map((contentType) =>
-    typeof contentType === "number" ? contentType : contentType.id,
-  );
+  const industryId = current.industry ? idOf(current.industry) : undefined;
+  const angleIds = (current.angles ?? []).map(idOf);
 
-  if (!categoryId && contentTypeIds.length === 0) return [];
+  if (!industryId && angleIds.length === 0) return [];
 
   const { docs } = await payload.find({
     collection: "ads",
@@ -22,8 +22,8 @@ export const getRelatedAds = cache(async (adId: number) => {
       _status: { equals: "published" },
       id: { not_equals: adId },
       or: [
-        ...(categoryId ? [{ category: { equals: categoryId } }] : []),
-        ...(contentTypeIds.length > 0 ? [{ contentTypes: { in: contentTypeIds } }] : []),
+        ...(industryId ? [{ industry: { equals: industryId } }] : []),
+        ...(angleIds.length > 0 ? [{ angles: { in: angleIds } }] : []),
       ],
     },
     sort: "-createdAt",

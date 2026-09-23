@@ -138,7 +138,7 @@ export function AdCard({ ad }: AdCardProps) {
           <span className="max-w-measure-card-title text-sm font-medium tracking-normal text-heading">
             {ad.thumbnailTitle}
           </span>
-          <span className="mt-0.5 truncate text-sm text-black/60">{ad.companyName}</span>
+          <span className="mt-0.5 truncate text-sm text-black/60">{ad.client?.name}</span>
         </div>
 
         <Pill tone={isTikTok ? "platform" : "default"} className="shrink-0">

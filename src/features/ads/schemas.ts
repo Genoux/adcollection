@@ -5,7 +5,7 @@ export const AD_SORT_VALUES = ["newest", "score"] as const;
 export type AdSort = (typeof AD_SORT_VALUES)[number];
 
 // Accepts both a real array (client calls) and a comma-separated string (URL
-// search params via `?categories=beauty,fashion` or nuqs' default array format).
+// search params via `?industries=beauty,fashion` or nuqs' default array format).
 const csvStringArray = z
   .union([z.array(z.string()), z.string()])
   .transform((value) =>
@@ -14,9 +14,11 @@ const csvStringArray = z
   .default([]);
 
 export const adFilterSchema = z.object({
-  categories: csvStringArray,
   contentTypes: csvStringArray,
+  industries: csvStringArray,
+  angles: csvStringArray,
   platforms: csvStringArray,
+  objectives: csvStringArray,
   search: z.string().trim().default(""),
   sort: z.enum(AD_SORT_VALUES).default("newest"),
   cursor: z.coerce.number().int().positive().optional(),

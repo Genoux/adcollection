@@ -1,6 +1,7 @@
 import type { CollectionConfig } from "payload";
 import { onlyLoggedIn, publishedOrLoggedIn } from "@/payload/access";
 import { applyOverallScore } from "@/payload/hooks/compute-overall-score";
+import { LANGUAGE_OPTIONS, PRODUCT_TYPE_OPTIONS } from "@/payload/tag-options";
 
 const HIGHLIGHT_METRIC_OPTIONS = [
   { label: "Audience Grab", value: "audience-grab" },
@@ -10,7 +11,7 @@ const HIGHLIGHT_METRIC_OPTIONS = [
 
 export const Ads: CollectionConfig = {
   slug: "ads",
-  admin: { useAsTitle: "thumbnailTitle" },
+  admin: { useAsTitle: "thumbnailTitle", group: "Library" },
   versions: { drafts: true },
   access: {
     read: publishedOrLoggedIn,
@@ -36,11 +37,10 @@ export const Ads: CollectionConfig = {
             },
             {
               name: "name",
+              label: "Product",
               type: "text",
               required: true,
-              admin: {
-                description: "Name of the product/brand being promoted. Shown on tooltips.",
-              },
+              admin: { description: "Product being promoted. Shown on tooltips." },
             },
             { name: "slug", type: "text", required: true, unique: true, index: true },
             {
@@ -85,62 +85,45 @@ export const Ads: CollectionConfig = {
           ],
         },
         {
-          label: "Brand",
+          label: "Credits",
           fields: [
-            { name: "companyName", type: "text" },
-            { name: "companyWebsiteUrl", type: "text" },
+            { name: "client", type: "relationship", relationTo: "clients", required: true },
             {
-              name: "companyWebsiteDisplay",
-              type: "text",
-              admin: { description: "Shortened version of link" },
-            },
-            {
-              name: "brandHandleName",
-              type: "text",
-              minLength: 5,
-              maxLength: 25,
-              admin: { description: "e.g. @dr.squatch" },
-            },
-            {
-              name: "brandHandleUrl",
-              type: "text",
-              admin: {
-                description: "If the brand has no social link, use Website as fallback",
-              },
+              name: "creator",
+              type: "group",
+              fields: [
+                { name: "handle", type: "text", admin: { description: "Without the @." } },
+                { name: "profileUrl", type: "text" },
+              ],
             },
             { name: "soundName", type: "text" },
             { name: "soundUrl", type: "text" },
           ],
         },
         {
-          label: "Creator",
+          label: "Tags",
           fields: [
-            { name: "profilePicture", type: "upload", relationTo: "media" },
-            {
-              name: "creatorHandle",
-              type: "text",
-              admin: { description: "Creator credits display" },
-            },
-            { name: "creatorProfileUrl", type: "text" },
-          ],
-        },
-        {
-          label: "Classification",
-          fields: [
-            { name: "platform", type: "relationship", relationTo: "platforms", required: true },
-            { name: "category", type: "relationship", relationTo: "categories" },
-            {
-              name: "subcategories",
-              type: "relationship",
-              relationTo: "subcategories",
-              hasMany: true,
-            },
             {
               name: "contentTypes",
               type: "relationship",
               relationTo: "content-types",
               hasMany: true,
+              required: true,
             },
+            { name: "industry", type: "relationship", relationTo: "industries" },
+            { name: "niches", type: "relationship", relationTo: "niches", hasMany: true },
+            { name: "angles", type: "relationship", relationTo: "angles", hasMany: true },
+            {
+              name: "platform",
+              type: "relationship",
+              relationTo: "platforms",
+              required: true,
+              admin: { description: "Platform the ad was made for. Part of the ad URL." },
+            },
+            { name: "objective", type: "relationship", relationTo: "objectives" },
+            { name: "markets", type: "relationship", relationTo: "markets", hasMany: true },
+            { name: "languages", type: "select", hasMany: true, options: [...LANGUAGE_OPTIONS] },
+            { name: "productType", type: "select", options: [...PRODUCT_TYPE_OPTIONS] },
           ],
         },
         {
@@ -166,6 +149,12 @@ export const Ads: CollectionConfig = {
       ],
     },
     { name: "featured", type: "checkbox", defaultValue: false, admin: { position: "sidebar" } },
+    {
+      name: "topPerformer",
+      type: "checkbox",
+      defaultValue: false,
+      admin: { position: "sidebar", description: "Performed notably well for the client." },
+    },
   ],
   hooks: {
     beforeChange: [({ data, originalDoc }) => applyOverallScore({ data, originalDoc })],

@@ -7,9 +7,7 @@ import { ResultsGrid } from "@/features/ads/components/browse/results-grid";
 import { ResultsSkeleton } from "@/features/ads/components/browse/results-skeleton";
 import { getFeaturedAds } from "@/features/ads/queries/get-featured-ads";
 import { parseAdFilter } from "@/features/ads/schemas";
-import { getCategories } from "@/features/taxonomy/queries/get-categories";
-import { getContentTypes } from "@/features/taxonomy/queries/get-content-types";
-import { getPlatforms } from "@/features/taxonomy/queries/get-platforms";
+import { getTags } from "@/features/taxonomy/queries/get-tags";
 import { Container } from "@/shared/components/layout/container";
 import { SectionHeader } from "@/shared/components/layout/section-header";
 
@@ -25,11 +23,13 @@ export default async function Home({ searchParams }: PageProps<"/">) {
   const resolvedSearchParams = await searchParams;
   const filter = parseAdFilter(resolvedSearchParams);
 
-  const [featuredAds, categories, contentTypes, platforms] = await Promise.all([
+  const [featuredAds, contentTypes, industries, angles, platforms, objectives] = await Promise.all([
     getFeaturedAds(),
-    getCategories(),
-    getContentTypes(),
-    getPlatforms(),
+    getTags("content-types"),
+    getTags("industries"),
+    getTags("angles"),
+    getTags("platforms"),
+    getTags("objectives"),
   ]);
 
   return (
@@ -57,7 +57,13 @@ export default async function Home({ searchParams }: PageProps<"/">) {
 
       <Container id="browse" className="mt-24 flex flex-col gap-8">
         <SectionHeader title="Browse & Filter">
-          <FilterBar categories={categories} contentTypes={contentTypes} platforms={platforms} />
+          <FilterBar
+            contentTypes={contentTypes}
+            industries={industries}
+            angles={angles}
+            platforms={platforms}
+            objectives={objectives}
+          />
         </SectionHeader>
         <Suspense key={JSON.stringify(filter)} fallback={<ResultsSkeleton />}>
           <ResultsGrid filter={filter} />

@@ -69,10 +69,14 @@ export interface Config {
   blocks: {};
   collections: {
     ads: Ad;
-    platforms: Platform;
-    categories: Category;
-    subcategories: Subcategory;
+    clients: Client;
     'content-types': ContentType;
+    industries: Industry;
+    niches: Niche;
+    angles: Angle;
+    platforms: Platform;
+    objectives: Objective;
+    markets: Market;
     media: Media;
     users: User;
     'frameio-connections': FrameioConnection;
@@ -87,10 +91,14 @@ export interface Config {
   collectionsJoins: {};
   collectionsSelect: {
     ads: AdsSelect<false> | AdsSelect<true>;
-    platforms: PlatformsSelect<false> | PlatformsSelect<true>;
-    categories: CategoriesSelect<false> | CategoriesSelect<true>;
-    subcategories: SubcategoriesSelect<false> | SubcategoriesSelect<true>;
+    clients: ClientsSelect<false> | ClientsSelect<true>;
     'content-types': ContentTypesSelect<false> | ContentTypesSelect<true>;
+    industries: IndustriesSelect<false> | IndustriesSelect<true>;
+    niches: NichesSelect<false> | NichesSelect<true>;
+    angles: AnglesSelect<false> | AnglesSelect<true>;
+    platforms: PlatformsSelect<false> | PlatformsSelect<true>;
+    objectives: ObjectivesSelect<false> | ObjectivesSelect<true>;
+    markets: MarketsSelect<false> | MarketsSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
     'frameio-connections': FrameioConnectionsSelect<false> | FrameioConnectionsSelect<true>;
@@ -165,7 +173,7 @@ export interface Ad {
    */
   thumbnailTitle: string;
   /**
-   * Name of the product/brand being promoted. Shown on tooltips.
+   * Product being promoted. Shown on tooltips.
    */
   name: string;
   slug: string;
@@ -173,39 +181,35 @@ export interface Ad {
   video: number | Media;
   thumbnail: number | Media;
   /**
-   * Was this ad made using inBeat or by inBeat Agency?
+   * Was this ad made by inBeat Agency?
    */
   madeWithInbeat?: boolean | null;
   /**
    * Link to the original ad (if not made with inBeat)
    */
   originalUrl?: string | null;
-  companyName?: string | null;
-  companyWebsiteUrl?: string | null;
-  /**
-   * Shortened version of link
-   */
-  companyWebsiteDisplay?: string | null;
-  /**
-   * e.g. @dr.squatch
-   */
-  brandHandleName?: string | null;
-  /**
-   * If the brand has no social link, use Website as fallback
-   */
-  brandHandleUrl?: string | null;
+  client: number | Client;
+  creator?: {
+    /**
+     * Without the @.
+     */
+    handle?: string | null;
+    profileUrl?: string | null;
+  };
   soundName?: string | null;
   soundUrl?: string | null;
-  profilePicture?: (number | null) | Media;
+  contentTypes: (number | ContentType)[];
+  industry?: (number | null) | Industry;
+  niches?: (number | Niche)[] | null;
+  angles?: (number | Angle)[] | null;
   /**
-   * Creator credits display
+   * Platform the ad was made for. Part of the ad URL.
    */
-  creatorHandle?: string | null;
-  creatorProfileUrl?: string | null;
   platform: number | Platform;
-  category?: (number | null) | Category;
-  subcategories?: (number | Subcategory)[] | null;
-  contentTypes?: (number | ContentType)[] | null;
+  objective?: (number | null) | Objective;
+  markets?: (number | Market)[] | null;
+  languages?: ('en' | 'fr' | 'es' | 'de' | 'pt' | 'it')[] | null;
+  productType?: ('app' | 'physical-product' | 'service') | null;
   ratingAudienceGrab?: number | null;
   ratingWatchability?: number | null;
   ratingClarity?: number | null;
@@ -216,6 +220,10 @@ export interface Ad {
   highlight?: string | null;
   highlightMetric?: ('audience-grab' | 'watchability' | 'ad-clarity') | null;
   featured?: boolean | null;
+  /**
+   * Performed notably well for the client.
+   */
+  topPerformer?: boolean | null;
   updatedAt: string;
   createdAt: string;
   _status?: ('draft' | 'published') | null;
@@ -241,34 +249,26 @@ export interface Media {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "platforms".
+ * via the `definition` "clients".
  */
-export interface Platform {
+export interface Client {
   id: number;
   name: string;
   slug: string;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "categories".
- */
-export interface Category {
-  id: number;
-  name: string;
-  slug: string;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "subcategories".
- */
-export interface Subcategory {
-  id: number;
-  name: string;
-  slug: string;
+  logo?: (number | null) | Media;
+  /**
+   * Social handle, e.g. drsquatch
+   */
+  handle?: string | null;
+  /**
+   * If the client has no social link, use the website as fallback.
+   */
+  handleUrl?: string | null;
+  websiteUrl?: string | null;
+  /**
+   * Shortened version of the website link.
+   */
+  websiteDisplay?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -277,6 +277,78 @@ export interface Subcategory {
  * via the `definition` "content-types".
  */
 export interface ContentType {
+  id: number;
+  name: string;
+  slug: string;
+  description?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "industries".
+ */
+export interface Industry {
+  id: number;
+  name: string;
+  slug: string;
+  description?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "niches".
+ */
+export interface Niche {
+  id: number;
+  name: string;
+  slug: string;
+  description?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "angles".
+ */
+export interface Angle {
+  id: number;
+  name: string;
+  slug: string;
+  description?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "platforms".
+ */
+export interface Platform {
+  id: number;
+  name: string;
+  slug: string;
+  description?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "objectives".
+ */
+export interface Objective {
+  id: number;
+  name: string;
+  slug: string;
+  description?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "markets".
+ */
+export interface Market {
   id: number;
   name: string;
   slug: string;
@@ -405,27 +477,51 @@ export interface PayloadMcpApiKey {
      */
     find?: boolean | null;
   };
-  platforms?: {
+  clients?: {
     /**
-     * Allow clients to find platforms.
-     */
-    find?: boolean | null;
-  };
-  categories?: {
-    /**
-     * Allow clients to find categories.
-     */
-    find?: boolean | null;
-  };
-  subcategories?: {
-    /**
-     * Allow clients to find subcategories.
+     * Allow clients to find clients.
      */
     find?: boolean | null;
   };
   contentTypes?: {
     /**
      * Allow clients to find content-types.
+     */
+    find?: boolean | null;
+  };
+  industries?: {
+    /**
+     * Allow clients to find industries.
+     */
+    find?: boolean | null;
+  };
+  niches?: {
+    /**
+     * Allow clients to find niches.
+     */
+    find?: boolean | null;
+  };
+  angles?: {
+    /**
+     * Allow clients to find angles.
+     */
+    find?: boolean | null;
+  };
+  platforms?: {
+    /**
+     * Allow clients to find platforms.
+     */
+    find?: boolean | null;
+  };
+  objectives?: {
+    /**
+     * Allow clients to find objectives.
+     */
+    find?: boolean | null;
+  };
+  markets?: {
+    /**
+     * Allow clients to find markets.
      */
     find?: boolean | null;
   };
@@ -439,7 +535,7 @@ export interface PayloadMcpApiKey {
      */
     frameioInspectFile?: boolean | null;
     /**
-     * Import a Frame.io video as a draft ad. Downloads the web-sized rendition and its poster frame into Media, resolves the taxonomy slugs, and creates the ad unpublished for human review. Returns the admin edit URL.
+     * Import a Frame.io video as a draft ad. Downloads the web-sized rendition and its poster frame into Media, resolves the tag slugs, and creates the ad unpublished for human review. Returns the admin edit URL.
      */
     importFrameioAd?: boolean | null;
   };
@@ -479,20 +575,36 @@ export interface PayloadLockedDocument {
         value: number | Ad;
       } | null)
     | ({
-        relationTo: 'platforms';
-        value: number | Platform;
-      } | null)
-    | ({
-        relationTo: 'categories';
-        value: number | Category;
-      } | null)
-    | ({
-        relationTo: 'subcategories';
-        value: number | Subcategory;
+        relationTo: 'clients';
+        value: number | Client;
       } | null)
     | ({
         relationTo: 'content-types';
         value: number | ContentType;
+      } | null)
+    | ({
+        relationTo: 'industries';
+        value: number | Industry;
+      } | null)
+    | ({
+        relationTo: 'niches';
+        value: number | Niche;
+      } | null)
+    | ({
+        relationTo: 'angles';
+        value: number | Angle;
+      } | null)
+    | ({
+        relationTo: 'platforms';
+        value: number | Platform;
+      } | null)
+    | ({
+        relationTo: 'objectives';
+        value: number | Objective;
+      } | null)
+    | ({
+        relationTo: 'markets';
+        value: number | Market;
       } | null)
     | ({
         relationTo: 'media';
@@ -583,20 +695,24 @@ export interface AdsSelect<T extends boolean = true> {
   thumbnail?: T;
   madeWithInbeat?: T;
   originalUrl?: T;
-  companyName?: T;
-  companyWebsiteUrl?: T;
-  companyWebsiteDisplay?: T;
-  brandHandleName?: T;
-  brandHandleUrl?: T;
+  client?: T;
+  creator?:
+    | T
+    | {
+        handle?: T;
+        profileUrl?: T;
+      };
   soundName?: T;
   soundUrl?: T;
-  profilePicture?: T;
-  creatorHandle?: T;
-  creatorProfileUrl?: T;
-  platform?: T;
-  category?: T;
-  subcategories?: T;
   contentTypes?: T;
+  industry?: T;
+  niches?: T;
+  angles?: T;
+  platform?: T;
+  objective?: T;
+  markets?: T;
+  languages?: T;
+  productType?: T;
   ratingAudienceGrab?: T;
   ratingWatchability?: T;
   ratingClarity?: T;
@@ -604,37 +720,23 @@ export interface AdsSelect<T extends boolean = true> {
   highlight?: T;
   highlightMetric?: T;
   featured?: T;
+  topPerformer?: T;
   updatedAt?: T;
   createdAt?: T;
   _status?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "platforms_select".
+ * via the `definition` "clients_select".
  */
-export interface PlatformsSelect<T extends boolean = true> {
+export interface ClientsSelect<T extends boolean = true> {
   name?: T;
   slug?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "categories_select".
- */
-export interface CategoriesSelect<T extends boolean = true> {
-  name?: T;
-  slug?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "subcategories_select".
- */
-export interface SubcategoriesSelect<T extends boolean = true> {
-  name?: T;
-  slug?: T;
+  logo?: T;
+  handle?: T;
+  handleUrl?: T;
+  websiteUrl?: T;
+  websiteDisplay?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -643,6 +745,72 @@ export interface SubcategoriesSelect<T extends boolean = true> {
  * via the `definition` "content-types_select".
  */
 export interface ContentTypesSelect<T extends boolean = true> {
+  name?: T;
+  slug?: T;
+  description?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "industries_select".
+ */
+export interface IndustriesSelect<T extends boolean = true> {
+  name?: T;
+  slug?: T;
+  description?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "niches_select".
+ */
+export interface NichesSelect<T extends boolean = true> {
+  name?: T;
+  slug?: T;
+  description?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "angles_select".
+ */
+export interface AnglesSelect<T extends boolean = true> {
+  name?: T;
+  slug?: T;
+  description?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "platforms_select".
+ */
+export interface PlatformsSelect<T extends boolean = true> {
+  name?: T;
+  slug?: T;
+  description?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "objectives_select".
+ */
+export interface ObjectivesSelect<T extends boolean = true> {
+  name?: T;
+  slug?: T;
+  description?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "markets_select".
+ */
+export interface MarketsSelect<T extends boolean = true> {
   name?: T;
   slug?: T;
   description?: T;
@@ -754,22 +922,42 @@ export interface PayloadMcpApiKeysSelect<T extends boolean = true> {
     | {
         find?: T;
       };
-  platforms?:
-    | T
-    | {
-        find?: T;
-      };
-  categories?:
-    | T
-    | {
-        find?: T;
-      };
-  subcategories?:
+  clients?:
     | T
     | {
         find?: T;
       };
   contentTypes?:
+    | T
+    | {
+        find?: T;
+      };
+  industries?:
+    | T
+    | {
+        find?: T;
+      };
+  niches?:
+    | T
+    | {
+        find?: T;
+      };
+  angles?:
+    | T
+    | {
+        find?: T;
+      };
+  platforms?:
+    | T
+    | {
+        find?: T;
+      };
+  objectives?:
+    | T
+    | {
+        find?: T;
+      };
+  markets?:
     | T
     | {
         find?: T;

@@ -16,14 +16,20 @@ export function buildAdBySlugWhere(slug: string): Where {
 export function buildAdsWhere(filter: AdFilter): Where {
   const where: Where = { ...publishedOnly };
 
-  if (filter.categories.length > 0) {
-    where["category.slug"] = { in: filter.categories };
-  }
   if (filter.contentTypes.length > 0) {
     where["contentTypes.slug"] = { in: filter.contentTypes };
   }
+  if (filter.industries.length > 0) {
+    where["industry.slug"] = { in: filter.industries };
+  }
+  if (filter.angles.length > 0) {
+    where["angles.slug"] = { in: filter.angles };
+  }
   if (filter.platforms.length > 0) {
     where["platform.slug"] = { in: filter.platforms };
+  }
+  if (filter.objectives.length > 0) {
+    where["objective.slug"] = { in: filter.objectives };
   }
 
   // Postgres DESC defaults to NULLS FIRST and Payload's drizzle order-by emits no

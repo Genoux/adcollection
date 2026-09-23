@@ -43,6 +43,15 @@ function InfoRow({ label, children }: { label: string; children: ReactNode }) {
 }
 
 export function AdHeader({ ad }: AdHeaderProps) {
+  const tags = [
+    ...ad.contentTypes.map((tag) => ({ ...tag, key: `content-type-${tag.id}` })),
+    ...(ad.industry ? [{ ...ad.industry, key: `industry-${ad.industry.id}` }] : []),
+    ...ad.niches.map((tag) => ({ ...tag, key: `niche-${tag.id}` })),
+    ...ad.angles.map((tag) => ({ ...tag, key: `angle-${tag.id}` })),
+    ...(ad.objective ? [{ ...ad.objective, key: `objective-${ad.objective.id}` }] : []),
+    ...ad.markets.map((tag) => ({ ...tag, key: `market-${tag.id}` })),
+  ];
+
   return (
     <div className="flex flex-col p-1">
       {/* Only ads inBeat produced carry the badge; the rest lead straight with the title. */}
@@ -63,18 +72,20 @@ export function AdHeader({ ad }: AdHeaderProps) {
       </h1>
 
       <dl className="flex flex-col">
-        <InfoRow label="Product/Brand">{ad.companyName}</InfoRow>
+        <InfoRow label="Client">{ad.client?.name}</InfoRow>
+
+        <InfoRow label="Product">{ad.name}</InfoRow>
 
         <InfoRow label="Website">
-          {ad.companyWebsiteUrl ? (
+          {ad.client?.websiteUrl ? (
             <a
-              href={ad.companyWebsiteUrl}
+              href={ad.client.websiteUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1.5 underline underline-offset-2"
             >
               <Link2 className="size-3.5 shrink-0" />
-              {ad.companyWebsiteDisplay ?? formatWebsiteLabel(ad.companyWebsiteUrl)}
+              {ad.client.websiteDisplay ?? formatWebsiteLabel(ad.client.websiteUrl)}
             </a>
           ) : (
             <span className="text-label">-</span>
@@ -84,15 +95,9 @@ export function AdHeader({ ad }: AdHeaderProps) {
         <InfoRow label="Tags">
           <div className="flex flex-wrap gap-2">
             <Pill tone="platform">{ad.platform.name}</Pill>
-            {ad.category && <Pill tone="default">{ad.category.name}</Pill>}
-            {ad.subcategories.map((subcategory) => (
-              <Pill key={subcategory.id} tone="default">
-                {subcategory.name}
-              </Pill>
-            ))}
-            {ad.contentTypes.map((contentType) => (
-              <Pill key={contentType.id} tone="default">
-                {contentType.name}
+            {tags.map((tag) => (
+              <Pill key={tag.key} tone="default">
+                {tag.name}
               </Pill>
             ))}
           </div>
