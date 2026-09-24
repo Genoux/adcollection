@@ -13,14 +13,14 @@ export async function ResultsGrid({ filter }: ResultsGridProps) {
 
   if (items.length === 0) {
     return (
-      <div className="flex flex-col min-h-64 justify-center items-center gap-3 rounded-lg border border-dashed border-hairline py-16 text-center">
+      <div className="flex flex-1 flex-col min-h-64 justify-center items-center gap-3 rounded-lg border border-dashed border-hairline py-16 text-center">
         <p className="text-subtle font-normal">No ads match these filters yet.</p>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-6">
       <AdGrid>
         {items.map((ad) => (
           <AdCard key={ad.id} ad={ad} />

@@ -4,6 +4,10 @@ import * as migration_20260922_132738_mcp_api_keys from './20260922_132738_mcp_a
 import * as migration_20260922_161337_frameio_connections from './20260922_161337_frameio_connections';
 import * as migration_20260922_170608_frameio_account_name from './20260922_170608_frameio_account_name';
 import * as migration_20260922_182127_mcp_oauth from './20260922_182127_mcp_oauth';
+import * as migration_20260923_155322_tag_restructure from './20260923_155322_tag_restructure';
+import * as migration_20260923_155741_content_types from './20260923_155741_content_types';
+import * as migration_20260923_192250_sort_title from './20260923_192250_sort_title';
+import * as migration_20260923_201728_ad_collections from './20260923_201728_ad_collections';
 
 export const migrations = [
   {
@@ -34,6 +38,26 @@ export const migrations = [
   {
     up: migration_20260922_182127_mcp_oauth.up,
     down: migration_20260922_182127_mcp_oauth.down,
-    name: '20260922_182127_mcp_oauth'
+    name: '20260922_182127_mcp_oauth',
+  },
+  {
+    up: migration_20260923_155322_tag_restructure.up,
+    down: migration_20260923_155322_tag_restructure.down,
+    name: '20260923_155322_tag_restructure',
+  },
+  {
+    up: migration_20260923_155741_content_types.up,
+    down: migration_20260923_155741_content_types.down,
+    name: '20260923_155741_content_types',
+  },
+  {
+    up: migration_20260923_192250_sort_title.up,
+    down: migration_20260923_192250_sort_title.down,
+    name: '20260923_192250_sort_title',
+  },
+  {
+    up: migration_20260923_201728_ad_collections.up,
+    down: migration_20260923_201728_ad_collections.down,
+    name: '20260923_201728_ad_collections'
   },
 ];

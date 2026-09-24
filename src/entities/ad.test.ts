@@ -1,31 +1,34 @@
 import { describe, expect, it } from "vitest";
-import type { Ad, Category, ContentType, Media, Platform, Subcategory } from "@/payload-types";
+import type {
+  Ad,
+  Angle,
+  Client,
+  ContentType,
+  Industry,
+  Media,
+  Niche,
+  Platform,
+} from "@/payload-types";
 import { toAdDetail, toAdListItem } from "./ad";
 
-const platform: Platform = {
-  id: 1,
-  name: "TikTok",
-  slug: "tiktok",
-  createdAt: "",
-  updatedAt: "",
-};
+const tag = { createdAt: "", updatedAt: "" };
 
-const category: Category = { id: 2, name: "Beauty", slug: "beauty", createdAt: "", updatedAt: "" };
+const platform: Platform = { id: 1, name: "TikTok", slug: "tiktok", ...tag };
+const industry: Industry = { id: 2, name: "Beauty", slug: "beauty", ...tag };
+const angle: Angle = { id: 3, name: "Unboxing", slug: "unboxing", ...tag };
+const niche: Niche = { id: 4, name: "Skincare", slug: "skincare", ...tag };
+const ugc: ContentType = { id: 7, name: "UGC", slug: "ugc", ...tag };
 
-const contentType: ContentType = {
-  id: 3,
-  name: "Unboxing",
-  slug: "unboxing",
-  createdAt: "",
-  updatedAt: "",
-};
-
-const subcategory: Subcategory = {
-  id: 4,
-  name: "Skincare",
-  slug: "skincare",
-  createdAt: "",
-  updatedAt: "",
+const client: Client = {
+  id: 5,
+  name: "Dr. Squatch",
+  slug: "dr-squatch",
+  logo: null,
+  websiteUrl: "https://www.drsquatch.com",
+  websiteDisplay: "drsquatch.com",
+  handle: "@drsquatch",
+  handleUrl: "https://tiktok.com/@drsquatch",
+  ...tag,
 };
 
 const media = (id: number, url: string): Media => ({
@@ -39,27 +42,22 @@ function makeAd(overrides: Partial<Ad> = {}): Ad {
   return {
     id: 10,
     thumbnailTitle: "Dr Squatch Soap",
-    name: "Dr Squatch",
+    name: "Pine Tar Soap",
     slug: "dr-squatch-soap",
     caption: null,
     video: media(20, "https://cdn.example.com/video.mp4"),
     thumbnail: media(21, "https://cdn.example.com/thumb.jpg"),
     madeWithInbeat: false,
     originalUrl: null,
-    companyName: null,
-    companyWebsiteUrl: null,
-    companyWebsiteDisplay: null,
-    brandHandleName: null,
-    brandHandleUrl: null,
+    client,
+    creator: {},
     soundName: null,
     soundUrl: null,
-    profilePicture: null,
-    creatorHandle: null,
-    creatorProfileUrl: null,
+    contentTypes: [ugc],
+    industry: null,
+    niches: null,
+    angles: null,
     platform,
-    category: null,
-    subcategories: null,
-    contentTypes: null,
     ratingAudienceGrab: null,
     ratingWatchability: null,
     ratingClarity: null,
@@ -75,7 +73,7 @@ function makeAd(overrides: Partial<Ad> = {}): Ad {
 }
 
 describe("toAdListItem", () => {
-  it("maps required media urls and the platform reference", () => {
+  it("maps required media urls, the platform and the content types", () => {
     const item = toAdListItem(makeAd());
     expect(item).toMatchObject({
       id: 10,
@@ -84,15 +82,17 @@ describe("toAdListItem", () => {
       thumbnailUrl: "https://cdn.example.com/thumb.jpg",
       videoUrl: "https://cdn.example.com/video.mp4",
       platform: { id: 1, name: "TikTok", slug: "tiktok" },
-      category: null,
-      contentTypes: [],
+      client: { id: 5, name: "Dr. Squatch", slug: "dr-squatch" },
+      industry: null,
+      contentTypes: [{ id: 7, name: "UGC", slug: "ugc" }],
+      angles: [],
     });
   });
 
-  it("maps a populated category and contentTypes list", () => {
-    const item = toAdListItem(makeAd({ category, contentTypes: [contentType] }));
-    expect(item?.category).toEqual({ id: 2, name: "Beauty", slug: "beauty" });
-    expect(item?.contentTypes).toEqual([{ id: 3, name: "Unboxing", slug: "unboxing" }]);
+  it("maps a populated industry and angles list", () => {
+    const item = toAdListItem(makeAd({ industry, angles: [angle] }));
+    expect(item?.industry).toEqual({ id: 2, name: "Beauty", slug: "beauty" });
+    expect(item?.angles).toEqual([{ id: 3, name: "Unboxing", slug: "unboxing" }]);
   });
 
   it("throws when a relationship was not populated (missing depth)", () => {
@@ -101,22 +101,31 @@ describe("toAdListItem", () => {
 });
 
 describe("toAdDetail", () => {
-  it("maps optional profilePicture url and subcategories", () => {
+  it("maps the client profile with its logo, and niches", () => {
     const detail = toAdDetail(
       makeAd({
-        profilePicture: media(23, "https://cdn.example.com/avatar.jpg"),
-        subcategories: [subcategory],
+        client: { ...client, logo: media(23, "https://cdn.example.com/logo.jpg") },
+        niches: [niche],
         madeWithInbeat: true,
       }),
     );
-    expect(detail?.profilePictureUrl).toBe("https://cdn.example.com/avatar.jpg");
-    expect(detail?.subcategories).toEqual([{ id: 4, name: "Skincare", slug: "skincare" }]);
+    expect(detail?.client).toMatchObject({
+      name: "Dr. Squatch",
+      logoUrl: "https://cdn.example.com/logo.jpg",
+      websiteDisplay: "drsquatch.com",
+    });
+    expect(detail?.niches).toEqual([{ id: 4, name: "Skincare", slug: "skincare" }]);
     expect(detail?.madeWithInbeat).toBe(true);
   });
 
-  it("defaults optional media urls to null", () => {
+  it("defaults a missing logo and creator to null", () => {
     const detail = toAdDetail(makeAd());
-    expect(detail?.profilePictureUrl).toBeNull();
+    expect(detail?.client?.logoUrl).toBeNull();
+    expect(detail?.creator).toBeNull();
+  });
+
+  it("throws when the client logo was not populated (detail needs depth 2)", () => {
+    expect(() => toAdDetail(makeAd({ client: { ...client, logo: 23 } }))).toThrow(/depth/);
   });
 });
 
@@ -129,15 +138,13 @@ describe("broken relationships", () => {
 
   it("still throws on an unpopulated id, which is a depth bug rather than missing data", () => {
     expect(() => toAdListItem(makeAd({ thumbnail: 21 }))).toThrow(/depth/);
-    expect(() => toAdDetail(makeAd({ contentTypes: [3] }))).toThrow(/depth/);
+    expect(() => toAdDetail(makeAd({ angles: [3] }))).toThrow(/depth/);
   });
 
   it("skips a deleted optional taxonomy row rather than failing the whole ad", () => {
-    const item = toAdListItem(
-      makeAd({ category: null, contentTypes: [null as unknown as ContentType] }),
-    );
-    expect(item?.contentTypes).toEqual([]);
-    expect(item?.category).toBeNull();
+    const item = toAdListItem(makeAd({ industry: null, angles: [null as unknown as Angle] }));
+    expect(item?.angles).toEqual([]);
+    expect(item?.industry).toBeNull();
   });
 
   it("returns null from toAdDetail when the list item cannot be rendered", () => {
@@ -145,18 +152,20 @@ describe("broken relationships", () => {
   });
 
   it("renders handles without a duplicate @ when the source already includes one", () => {
-    const detail = toAdDetail(
-      makeAd({ brandHandleName: "@icelandicprovisions", creatorHandle: "@taraswrld" }),
-    );
+    const detail = toAdDetail(makeAd({ creator: { handle: "@taraswrld", profileUrl: null } }));
 
-    expect(detail?.brandHandleName).toBe("icelandicprovisions");
-    expect(detail?.creatorHandle).toBe("taraswrld");
+    expect(detail?.client?.handle).toBe("drsquatch");
+    expect(detail?.creator?.handle).toBe("taraswrld");
   });
 
   it("leaves handles without a leading @ untouched", () => {
-    const detail = toAdDetail(makeAd({ brandHandleName: "scentbird", creatorHandle: null }));
+    const detail = toAdDetail(makeAd({ client: { ...client, handle: "scentbird" } }));
 
-    expect(detail?.brandHandleName).toBe("scentbird");
-    expect(detail?.creatorHandle).toBeNull();
+    expect(detail?.client?.handle).toBe("scentbird");
+  });
+
+  it("keeps the ad renderable when its client was deleted", () => {
+    const item = toAdListItem(makeAd({ client: null as unknown as Client }));
+    expect(item?.client).toBeNull();
   });
 });

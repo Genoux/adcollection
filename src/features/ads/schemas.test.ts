@@ -6,9 +6,13 @@ describe("adFilterSchema", () => {
     const result = adFilterSchema.parse({});
 
     expect(result).toEqual({
-      categories: [],
       contentTypes: [],
+      industries: [],
+      angles: [],
       platforms: [],
+      objectives: [],
+      niches: [],
+      markets: [],
       search: "",
       sort: "newest",
       limit: 24,
@@ -16,13 +20,13 @@ describe("adFilterSchema", () => {
   });
 
   it("parses a comma-separated facet value (URL search params)", () => {
-    const result = adFilterSchema.parse({ categories: "beauty,fashion, tech" });
-    expect(result.categories).toEqual(["beauty", "fashion", "tech"]);
+    const result = adFilterSchema.parse({ industries: "beauty,fashion, tech" });
+    expect(result.industries).toEqual(["beauty", "fashion", "tech"]);
   });
 
   it("parses a real array facet value (client calls)", () => {
-    const result = adFilterSchema.parse({ contentTypes: ["unboxing", "review"] });
-    expect(result.contentTypes).toEqual(["unboxing", "review"]);
+    const result = adFilterSchema.parse({ angles: ["unboxing", "review"] });
+    expect(result.angles).toEqual(["unboxing", "review"]);
   });
 
   it("rejects an invalid sort value", () => {

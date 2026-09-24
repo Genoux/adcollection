@@ -12,23 +12,13 @@ const ctaButton =
   "block rounded-sm px-6 py-3 text-center leading-6 bg-black/10 text-black transition-colors hover:bg-black hover:text-white";
 
 export function CreatorCard({ ad }: CreatorCardProps) {
-  const {
-    brandHandleName,
-    brandHandleUrl,
-    creatorHandle,
-    creatorProfileUrl,
-    profilePictureUrl,
-    caption,
-    soundName,
-    soundUrl,
-    originalUrl,
-    madeWithInbeat,
-  } = ad;
+  const { client, creator, caption, soundName, soundUrl, originalUrl, madeWithInbeat } = ad;
 
-  // The video panel slot is the brand's own account, not the creator's - fall back to
-  // the creator handle so rows without a brand handle still show something.
-  const topHandle = brandHandleName ?? creatorHandle;
-  const topHandleUrl = brandHandleName ? brandHandleUrl : creatorProfileUrl;
+  // The video panel slot is the client's own account, not the creator's - fall back to
+  // the creator handle so clients without a handle still show something.
+  const topHandle = client?.handle ?? creator?.handle;
+  const topHandleUrl = client?.handle ? client.handleUrl : creator?.profileUrl;
+  const profilePictureUrl = client?.logoUrl;
   const topHandleInitials = topHandle?.slice(0, 2).toUpperCase() ?? "";
 
   return (
@@ -98,31 +88,27 @@ export function CreatorCard({ ad }: CreatorCardProps) {
           </a>
         ) : (
           <div className="flex flex-col gap-6">
-            <div className="flex flex-col gap-1">
-              <p className="border-t border-hairline pt-6 text-label text-black/60">
-                Creator Credits
-              </p>
-              {creatorHandle &&
-                (creatorProfileUrl ? (
+            {creator && (
+              <div className="flex flex-col gap-1">
+                <p className="border-t border-hairline pt-6 text-label text-black/60">
+                  Creator Credits
+                </p>
+                {creator.profileUrl ? (
                   <a
-                    href={creatorProfileUrl}
+                    href={creator.profileUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="font-medium text-heading hover:underline w-fit"
                   >
-                    @{creatorHandle}
+                    @{creator.handle}
                   </a>
                 ) : (
-                  <span className="font-medium text-heading">@{creatorHandle}</span>
-                ))}
-            </div>
+                  <span className="font-medium text-heading">@{creator.handle}</span>
+                )}
+              </div>
+            )}
             {originalUrl && (
-              <a
-                href={originalUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block rounded-sm px-6 py-3 text-center leading-6 bg-black/10 text-black transition-colors hover:bg-black hover:text-white"
-              >
+              <a href={originalUrl} target="_blank" rel="noopener noreferrer" className={ctaButton}>
                 Link to Original
               </a>
             )}

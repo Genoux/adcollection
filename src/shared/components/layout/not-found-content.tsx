@@ -1,5 +1,8 @@
+import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
-import { Container } from "@/shared/components/layout/container";
+import { HistoryBackLink } from "@/shared/components/history-back-link";
+import { StatusMessage } from "@/shared/components/layout/status-message";
+import { Button } from "@/shared/components/ui/button";
 
 export const NOT_FOUND_TITLE = "Page Not Found";
 export const NOT_FOUND_DESCRIPTION =
@@ -7,12 +10,23 @@ export const NOT_FOUND_DESCRIPTION =
 
 export function NotFoundContent() {
   return (
-    <Container className="flex flex-1 flex-col items-center justify-center gap-4 py-24 text-center">
-      <h1 className="text-page-h1 text-heading">{NOT_FOUND_TITLE}</h1>
-      <p className="max-w-md text-subtle">{NOT_FOUND_DESCRIPTION}</p>
-      <Link href="/" className="text-body font-medium text-heading underline underline-offset-4">
-        ← Take me back!
-      </Link>
-    </Container>
+    <StatusMessage
+      label="404"
+      title={NOT_FOUND_TITLE}
+      description={NOT_FOUND_DESCRIPTION}
+      actions={
+        <>
+          <Button asChild variant="outline" size="lg" className="border-black/20 shadow-none">
+            <HistoryBackLink fallbackHref="/">
+              <ArrowLeft />
+              Go back
+            </HistoryBackLink>
+          </Button>
+          <Button asChild size="lg" className="bg-black text-white hover:bg-black/85">
+            <Link href="/ads">Browse all ads</Link>
+          </Button>
+        </>
+      }
+    />
   );
 }

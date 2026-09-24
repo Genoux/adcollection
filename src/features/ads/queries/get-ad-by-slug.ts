@@ -9,7 +9,8 @@ export const getAdBySlug = cache(async (slug: string) => {
   const { docs } = await payload.find({
     collection: "ads",
     where: buildAdBySlugWhere(slug),
-    depth: 1,
+    // The client logo sits one level below the ad.
+    depth: 2,
     limit: 1,
   });
 

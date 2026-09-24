@@ -38,7 +38,7 @@ const DIMENSIONS = [
 export function RatingWidget({ ratings, overallScore }: RatingWidgetProps) {
   return (
     <div className="mt-12 mb-rating-gap grid grid-cols-1 items-center gap-10 rounded-lg bg-card-alt p-10 lg:grid-split lg:p-16">
-      <div className="grid grid-cols-3 gap-8">
+      <div className="grid grid-cols-3 gap-6">
         {DIMENSIONS.map((dimension) => (
           <div key={dimension.key} className="flex flex-col items-center gap-3 text-center">
             <RatingRing

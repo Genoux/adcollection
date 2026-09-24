@@ -1,8 +1,10 @@
 name: CI
 
 on:
+  # Release branches collect feature PRs before one PR to main, so they need the
+  # same gate; only main's push triggers the production release.
   pull_request:
-    branches: [main]
+    branches: [main, "release/**"]
 
 concurrency:
   group: ci-${{ github.head_ref }}

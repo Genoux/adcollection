@@ -1,36 +1,36 @@
-import type { Ad, Category, ContentType, Media, Platform, Subcategory } from "@/payload-types";
-import type { TaxonomyRef } from "./taxonomy";
+import type { Ad, Media } from "@/payload-types";
+import type { ClientProfile, ClientSummary, Creator } from "./client";
+import { toClientProfile, toClientSummary, toCreator } from "./client";
+import type { TaxonomyDoc, TaxonomyRef } from "./taxonomy";
 import { requirePopulated, toTaxonomyRef } from "./taxonomy";
 
 export type AdListItem = {
   id: number;
   slug: string;
   thumbnailTitle: string;
-  companyName: string | null;
+  client: ClientSummary | null;
   overallScore: number | null;
   createdAt: string;
   thumbnailUrl: string;
   videoUrl: string;
   platform: TaxonomyRef;
-  category: TaxonomyRef | null;
+  industry: TaxonomyRef | null;
   contentTypes: TaxonomyRef[];
+  angles: TaxonomyRef[];
 };
 
-export type AdDetail = AdListItem & {
+export type AdDetail = Omit<AdListItem, "client"> & {
+  client: ClientProfile | null;
+  creator: Creator | null;
   name: string;
   caption: string | null;
   madeWithInbeat: boolean;
   originalUrl: string | null;
-  companyWebsiteUrl: string | null;
-  companyWebsiteDisplay: string | null;
-  brandHandleName: string | null;
-  brandHandleUrl: string | null;
   soundName: string | null;
   soundUrl: string | null;
-  profilePictureUrl: string | null;
-  creatorHandle: string | null;
-  creatorProfileUrl: string | null;
-  subcategories: TaxonomyRef[];
+  niches: TaxonomyRef[];
+  objective: TaxonomyRef | null;
+  markets: TaxonomyRef[];
   ratingAudienceGrab: number | null;
   ratingWatchability: number | null;
   ratingClarity: number | null;
@@ -43,21 +43,26 @@ function mediaUrl(value: number | Media | null | undefined, field: string): stri
   return requirePopulated(value, field)?.url ?? null;
 }
 
-function taxonomyRefs<T extends Category | ContentType | Platform | Subcategory>(
+function taxonomyRef<T extends TaxonomyDoc>(
+  value: number | T | null | undefined,
+  field: string,
+): TaxonomyRef | null {
+  const doc = requirePopulated(value, field);
+  return doc ? toTaxonomyRef(doc) : null;
+}
+
+function taxonomyRefs<T extends TaxonomyDoc>(
   values: (number | T)[] | null | undefined,
   field: string,
 ): TaxonomyRef[] {
-  return (values ?? []).flatMap((value) => {
-    const doc = requirePopulated(value, field);
-    return doc ? toTaxonomyRef(doc) : [];
-  });
+  return (values ?? []).flatMap((value) => taxonomyRef(value, field) ?? []);
 }
 
 export function toAdListItem(ad: Ad): AdListItem | null {
   const thumbnailUrl = mediaUrl(ad.thumbnail, "thumbnail");
   const videoUrl = mediaUrl(ad.video, "video");
-  const platform = requirePopulated(ad.platform, "platform");
-  const category = requirePopulated(ad.category, "category");
+  const platform = taxonomyRef(ad.platform, "platform");
+  const client = requirePopulated(ad.client, "client");
 
   if (!thumbnailUrl || !videoUrl || !platform) return null;
 
@@ -65,44 +70,37 @@ export function toAdListItem(ad: Ad): AdListItem | null {
     id: ad.id,
     slug: ad.slug,
     thumbnailTitle: ad.thumbnailTitle,
-    companyName: ad.companyName ?? null,
+    client: client ? toClientSummary(client) : null,
     overallScore: ad.overallScore ?? null,
     createdAt: ad.createdAt,
     thumbnailUrl,
     videoUrl,
-    platform: toTaxonomyRef(platform),
-    category: category ? toTaxonomyRef(category) : null,
+    platform,
+    industry: taxonomyRef(ad.industry, "industry"),
     contentTypes: taxonomyRefs(ad.contentTypes, "contentTypes"),
+    angles: taxonomyRefs(ad.angles, "angles"),
   };
-}
-
-// Webflow stored handles inconsistently, some with a leading "@" and some without,
-// and every view renders its own "@" prefix.
-function normalizeHandle(handle: string | null | undefined): string | null {
-  const trimmed = handle?.trim().replace(/^@+/, "");
-  return trimmed ? trimmed : null;
 }
 
 export function toAdDetail(ad: Ad): AdDetail | null {
   const listItem = toAdListItem(ad);
   if (!listItem) return null;
 
+  const client = requirePopulated(ad.client, "client");
+
   return {
     ...listItem,
+    client: client ? toClientProfile(client) : null,
+    creator: toCreator(ad.creator),
     name: ad.name,
     caption: ad.caption ?? null,
     madeWithInbeat: ad.madeWithInbeat ?? false,
     originalUrl: ad.originalUrl ?? null,
-    companyWebsiteUrl: ad.companyWebsiteUrl ?? null,
-    companyWebsiteDisplay: ad.companyWebsiteDisplay ?? null,
-    brandHandleName: normalizeHandle(ad.brandHandleName),
-    brandHandleUrl: ad.brandHandleUrl ?? null,
     soundName: ad.soundName ?? null,
     soundUrl: ad.soundUrl ?? null,
-    profilePictureUrl: mediaUrl(ad.profilePicture, "profilePicture"),
-    creatorHandle: normalizeHandle(ad.creatorHandle),
-    creatorProfileUrl: ad.creatorProfileUrl ?? null,
-    subcategories: taxonomyRefs(ad.subcategories, "subcategories"),
+    niches: taxonomyRefs(ad.niches, "niches"),
+    objective: taxonomyRef(ad.objective, "objective"),
+    markets: taxonomyRefs(ad.markets, "markets"),
     ratingAudienceGrab: ad.ratingAudienceGrab ?? null,
     ratingWatchability: ad.ratingWatchability ?? null,
     ratingClarity: ad.ratingClarity ?? null,
