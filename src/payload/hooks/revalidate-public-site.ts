@@ -8,13 +8,15 @@ import type {
 // Ad pages are cached on first render, and an ad, client or tag edit reaches every
 // grid and related-ads row, so the whole public tree is purged rather than tracing
 // which paths a document appears on. Edits are rare enough for that to be cheap.
-const revalidateAfterChange: CollectionAfterChangeHook = ({ doc }) => {
-  revalidatePath("/", "layout");
+// revalidatePath throws outside a Next request, so scripts and seeds opt out with
+// `context: { disableRevalidate: true }` (Payload's website-template convention).
+const revalidateAfterChange: CollectionAfterChangeHook = ({ doc, context }) => {
+  if (!context.disableRevalidate) revalidatePath("/", "layout");
   return doc;
 };
 
-const revalidateAfterDelete: CollectionAfterDeleteHook = ({ doc }) => {
-  revalidatePath("/", "layout");
+const revalidateAfterDelete: CollectionAfterDeleteHook = ({ doc, context }) => {
+  if (!context.disableRevalidate) revalidatePath("/", "layout");
   return doc;
 };
 

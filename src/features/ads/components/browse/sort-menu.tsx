@@ -2,15 +2,7 @@
 
 import { ArrowUpDown, Check } from "lucide-react";
 import { DropdownMenu } from "radix-ui";
-import { AD_SORT_VALUES, type AdSort } from "@/features/ads/schemas";
-
-const SORT_LABELS: Record<AdSort, string> = {
-  newest: "Newest",
-  oldest: "Oldest",
-  score: "Best rated",
-  "title-asc": "A to Z",
-  "title-desc": "Z to A",
-};
+import { AD_SORT_VALUES, type AdSort, AD_SORT_LABELS as SORT_LABELS } from "@/features/ads/schemas";
 
 interface SortMenuProps {
   value: AdSort;

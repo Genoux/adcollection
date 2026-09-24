@@ -4,6 +4,14 @@ export const AD_SORT_VALUES = ["newest", "oldest", "score", "title-asc", "title-
 
 export type AdSort = (typeof AD_SORT_VALUES)[number];
 
+export const AD_SORT_LABELS: Record<AdSort, string> = {
+  newest: "Newest",
+  oldest: "Oldest",
+  score: "Best rated",
+  "title-asc": "A to Z",
+  "title-desc": "Z to A",
+};
+
 // Accepts both a real array (client calls) and a comma-separated string (URL
 // search params via `?industries=beauty,fashion` or nuqs' default array format).
 const csvStringArray = z

@@ -16,7 +16,8 @@
   },
   "css": {
     "parser": {
-      "tailwindDirectives": true
+      "tailwindDirectives": true,
+      "cssModules": true
     }
   },
   "formatter": {
