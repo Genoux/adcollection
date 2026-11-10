@@ -16,7 +16,7 @@
   --spacing-measure-lede: 560px;
   --spacing-measure-card-title: 200px;
 
-  --animate-marquee: marquee 80s linear infinite;
+  --animate-marquee: marquee 113s linear infinite;
 
   @keyframes marquee {
     to {
