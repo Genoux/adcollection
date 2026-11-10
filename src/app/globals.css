@@ -16,6 +16,14 @@
   --spacing-measure-lede: 560px;
   --spacing-measure-card-title: 200px;
 
+  --animate-marquee: marquee 80s linear infinite;
+
+  @keyframes marquee {
+    to {
+      transform: translateX(-50%);
+    }
+  }
+
   --breakpoint-card: 480px;
   --breakpoint-wide: 992px;
 

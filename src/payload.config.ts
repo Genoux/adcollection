@@ -23,6 +23,7 @@ import {
   Platforms,
 } from "@/payload/collections/tags";
 import { Users } from "@/payload/collections/users";
+import { LogoBanner } from "@/payload/globals/logo-banner";
 import { mcpTools } from "@/payload/mcp";
 import { mcpCollections } from "@/payload/mcp/collections";
 import { mcpAuthChallenge, mcpOverrideAuth } from "@/payload/mcp/oauth/plugin";
@@ -52,6 +53,7 @@ export default buildConfig({
     McpOauthClients,
     McpOauthGrants,
   ],
+  globals: [LogoBanner],
   db: postgresAdapter({
     pool: { connectionString: env.DATABASE_URL },
     // Dev push silently diverges the database from src/migrations, which is how the

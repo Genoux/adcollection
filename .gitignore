@@ -45,3 +45,5 @@ next-env.d.ts
 .claude/
 
 certificates
+# throwaway demos and screenshots
+.demo/
