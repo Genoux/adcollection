@@ -116,8 +116,12 @@ export interface Config {
     defaultIDType: number;
   };
   fallbackLocale: null;
-  globals: {};
-  globalsSelect: {};
+  globals: {
+    'logo-banner': LogoBanner;
+  };
+  globalsSelect: {
+    'logo-banner': LogoBannerSelect<false> | LogoBannerSelect<true>;
+  };
   locale: null;
   widgets: {
     collections: CollectionsWidget;
@@ -1050,6 +1054,41 @@ export interface PayloadMigrationsSelect<T extends boolean = true> {
   batch?: T;
   updatedAt?: T;
   createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "logo-banner".
+ */
+export interface LogoBanner {
+  id: number;
+  /**
+   * Brand wordmarks scrolling under the home hero, in this order. Drag to reorder. Use a black SVG on a transparent background, cropped tight left and right so the gaps stay even.
+   */
+  logos?:
+    | {
+        name: string;
+        logo: number | Media;
+        id?: string | null;
+      }[]
+    | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "logo-banner_select".
+ */
+export interface LogoBannerSelect<T extends boolean = true> {
+  logos?:
+    | T
+    | {
+        name?: T;
+        logo?: T;
+        id?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

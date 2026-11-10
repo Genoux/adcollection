@@ -10,7 +10,9 @@ export function VideoPlayer({ videoUrl, thumbnailUrl, title }: VideoPlayerProps)
     <div className="aspect-reel w-full bg-surface-inverse">
       {/* biome-ignore lint/a11y/useMediaCaption: source ads have no caption tracks. */}
       <video
-        className="size-full object-cover"
+        // Cover fills the 9:16 card inline, but it also beats the browser's fullscreen
+        // `object-fit: contain`, cropping a vertical ad to a zoomed-in landscape frame.
+        className="size-full object-cover [&:fullscreen]:object-contain"
         controls
         playsInline
         // Buffered up front so pressing play starts instantly instead of waiting on the network.

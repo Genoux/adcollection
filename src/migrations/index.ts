@@ -8,6 +8,7 @@ import * as migration_20260923_155322_tag_restructure from './20260923_155322_ta
 import * as migration_20260923_155741_content_types from './20260923_155741_content_types';
 import * as migration_20260923_192250_sort_title from './20260923_192250_sort_title';
 import * as migration_20260923_201728_ad_collections from './20260923_201728_ad_collections';
+import * as migration_20261110_140932_logo_banner from './20261110_140932_logo_banner';
 
 export const migrations = [
   {
@@ -58,6 +59,11 @@ export const migrations = [
   {
     up: migration_20260923_201728_ad_collections.up,
     down: migration_20260923_201728_ad_collections.down,
-    name: '20260923_201728_ad_collections'
+    name: '20260923_201728_ad_collections',
+  },
+  {
+    up: migration_20261110_140932_logo_banner.up,
+    down: migration_20261110_140932_logo_banner.down,
+    name: '20261110_140932_logo_banner'
   },
 ];

@@ -1,4 +1,3 @@
-import { ArrowRight } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { connection } from "next/server";
@@ -6,6 +5,8 @@ import { AdCard } from "@/features/ads/components/ad-card";
 import { AdGrid } from "@/features/ads/components/ad-grid";
 import { getFeaturedAds } from "@/features/ads/queries/get-featured-ads";
 import { getLatestAds } from "@/features/ads/queries/get-latest-ads";
+import { LogoMarquee } from "@/features/logo-banner/components/logo-marquee";
+import { getBannerLogos } from "@/features/logo-banner/queries/get-banner-logos";
 import { Container } from "@/shared/components/layout/container";
 import { SectionHeader } from "@/shared/components/layout/section-header";
 import { Button } from "@/shared/components/ui/button";
@@ -22,11 +23,15 @@ export default async function Home() {
   // Without a request-time API this page would prerender at build, which needs the
   // database and its current schema while migrations run in a separate CI job.
   await connection();
-  const [featuredAds, latestAds] = await Promise.all([getFeaturedAds(), getLatestAds()]);
+  const [featuredAds, latestAds, bannerLogos] = await Promise.all([
+    getFeaturedAds(),
+    getLatestAds(),
+    getBannerLogos(),
+  ]);
 
   return (
     <>
-      <Container className="pt-16 pb-24">
+      <Container className={bannerLogos.length > 0 ? "pt-16 pb-16" : "pt-16 pb-24"}>
         <h1 className="mb-6 max-w-measure-hero text-display text-heading max-lg:text-display-sm">
           A deep dive into the strategy behind high-converting ad creative
         </h1>
@@ -35,6 +40,12 @@ export default async function Home() {
           what actually works.
         </p>
       </Container>
+
+      {bannerLogos.length > 0 && (
+        <Container className="mb-24">
+          <LogoMarquee logos={bannerLogos} />
+        </Container>
+      )}
 
       {featuredAds.length > 0 && (
         <Container className="flex flex-col gap-6">
